@@ -1,11 +1,11 @@
 from collections import namedtuple
 
-from armddft.verifier.AnalysisResult import AnalysisResult
-from armddft.verifier.AssignmentCollection import AssignmentCollection
-from armddft.verifier.SecurityLevel import SecurityLevel
-from armddft.verifier.exceptions.BranchtimeDiffersException import BranchtimeDiffersException
-from armddft.verifier.exceptions.LoopOnHighConditionException import LoopOnHighConditionException
-from armddft.verifier.exceptions.NemisisOnHighConditionException import NemisisOnHighConditionException
+from armsdft.verifier.AnalysisResult import AnalysisResult
+from armsdft.verifier.AssignmentCollection import AssignmentCollection
+from armsdft.verifier.SecurityLevel import SecurityLevel
+from armsdft.verifier.exceptions.BranchtimeDiffersException import BranchtimeDiffersException
+from armsdft.verifier.exceptions.LoopOnHighConditionException import LoopOnHighConditionException
+from armsdft.verifier.exceptions.NemisisOnHighConditionException import NemisisOnHighConditionException
 
 
 class Analysis:

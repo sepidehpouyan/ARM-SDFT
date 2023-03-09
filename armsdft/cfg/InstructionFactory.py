@@ -1,14 +1,14 @@
-from armddft.cfg.instructions.InstructionPush import InstructionPush
-from armddft.cfg.instructions.InstructionPop import InstructionPop
-from armddft.cfg.instructions.InstructionStr import InstructionStr
-from armddft.cfg.instructions.InstructionLdr import InstructionLdr
-from armddft.cfg.instructions.InstructionCmp import InstructionCmp
-from armddft.cfg.instructions.InstructionMov import InstructionMov
-from armddft.cfg.instructions.InstructionAdd import InstructionAdd
-from armddft.cfg.instructions.InstructionLsl import InstructionLsl
-from armddft.cfg.instructions.InstructionSub import InstructionSub
-from armddft.cfg.instructions.InstructionB import InstructionB
-from armddft.cfg.instructions.InstructionBl import InstructionBl
+from armsdft.cfg.instructions.InstructionPush import InstructionPush
+from armsdft.cfg.instructions.InstructionPop import InstructionPop
+from armsdft.cfg.instructions.InstructionStr import InstructionStr
+from armsdft.cfg.instructions.InstructionLdr import InstructionLdr
+from armsdft.cfg.instructions.InstructionCmp import InstructionCmp
+from armsdft.cfg.instructions.InstructionMov import InstructionMov
+from armsdft.cfg.instructions.InstructionAdd import InstructionAdd
+from armsdft.cfg.instructions.InstructionLsl import InstructionLsl
+from armsdft.cfg.instructions.InstructionSub import InstructionSub
+from armsdft.cfg.instructions.InstructionB import InstructionB
+from armsdft.cfg.instructions.InstructionBl import InstructionBl
 
 
 

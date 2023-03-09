@@ -1,5 +1,5 @@
-from armddft.cfg.StackPointer import StackPointer
-from armddft.cfg.AbstractInstruction import AbstractInstruction
+from armsdft.cfg.StackPointer import StackPointer
+from armsdft.cfg.AbstractInstruction import AbstractInstruction
 
 
 class InstructionPush(AbstractInstruction):
@@ -22,5 +22,3 @@ class InstructionPush(AbstractInstruction):
 
         sp_domain = ac.ra.get(StackPointer.SP)& ac.secenv.get(self.get_execution_point())
         ac.ra.set(StackPointer.SP, sp_domain)
-
-        print("o0o0o0o0o0lo0o0o: ", self.program.mem_map)

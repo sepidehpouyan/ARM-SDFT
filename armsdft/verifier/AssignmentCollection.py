@@ -1,5 +1,5 @@
-from armddft.verifier.SecurityLevel import SecurityLevel
-from armddft.verifier.SecurityLevelAssignment import SecurityLevelAssignment
+from armsdft.verifier.SecurityLevel import SecurityLevel
+from armsdft.verifier.SecurityLevelAssignment import SecurityLevelAssignment
 
 class AssignmentCollection:
     def __init__(self, secenv, stack, ra, sra, mem):

@@ -1,5 +1,5 @@
-from armddft.cfg.StackPointer import StackPointer
-from armddft.cfg.AbstractInstruction import AbstractInstruction
+from armsdft.cfg.StackPointer import StackPointer
+from armsdft.cfg.AbstractInstruction import AbstractInstruction
 
 
 class InstructionPop(AbstractInstruction):

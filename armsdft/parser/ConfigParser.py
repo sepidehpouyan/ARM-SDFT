@@ -2,8 +2,8 @@ import json
 
 import math
 
-from armddft.verifier.AssignmentCollection import AssignmentCollection
-from armddft.verifier.SecurityLevel import SecurityLevel
+from armsdft.verifier.AssignmentCollection import AssignmentCollection
+from armsdft.verifier.SecurityLevel import SecurityLevel
 
 class ConfigParser:
     def __init__(self):

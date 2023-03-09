@@ -1,5 +1,5 @@
-from armddft.cfg.AbstractInstruction import AbstractInstruction
-from armddft.cfg.ExecutionPoint import ExecutionPoint
+from armsdft.cfg.AbstractInstruction import AbstractInstruction
+from armsdft.cfg.ExecutionPoint import ExecutionPoint
 
 
 class AbstractInstructionControlFlow(AbstractInstruction):

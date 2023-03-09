@@ -1,6 +1,6 @@
-from armddft.cfg.AbstractInstruction import AbstractInstruction
-from armddft.cfg.ExecutionPoint import ExecutionPoint
-from armddft.cfg.instructions.RecursionException import RecursionException
+from armsdft.cfg.AbstractInstruction import AbstractInstruction
+from armsdft.cfg.ExecutionPoint import ExecutionPoint
+from armsdft.cfg.instructions.RecursionException import RecursionException
 from elftools.elf.elffile import ELFFile
 
 class InstructionBl(AbstractInstruction):

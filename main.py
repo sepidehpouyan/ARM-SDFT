@@ -2,9 +2,9 @@
 import json
 import sys
 
-from armddft.verifier.Analysis import Analysis
-from armddft.parser.ConfigParser import ConfigParser
-from armddft.parser.Parser import Parser
+from armsdft.verifier.Analysis import Analysis
+from armsdft.parser.ConfigParser import ConfigParser
+from armsdft.parser.Parser import Parser
 
 def main():
     args = sys.argv

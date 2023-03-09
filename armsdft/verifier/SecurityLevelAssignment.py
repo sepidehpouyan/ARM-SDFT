@@ -1,4 +1,4 @@
-from armddft.verifier.SecurityLevel import SecurityLevel
+from armsdft.verifier.SecurityLevel import SecurityLevel
 
 
 class SecurityLevelAssignment:

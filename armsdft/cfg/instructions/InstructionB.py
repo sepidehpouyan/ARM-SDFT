@@ -1,5 +1,5 @@
-from armddft.cfg.StatusRegister import StatusRegister
-from armddft.cfg.instructions.AbstractInstructionBranching import AbstractInstructionBranching
+from armsdft.cfg.StatusRegister import StatusRegister
+from armsdft.cfg.instructions.AbstractInstructionBranching import AbstractInstructionBranching
 
 
 class InstructionB(AbstractInstructionBranching):

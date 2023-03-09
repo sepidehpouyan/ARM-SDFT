@@ -1,4 +1,4 @@
-from armddft.cfg.ExecutionPoint import ExecutionPoint
+from armsdft.cfg.ExecutionPoint import ExecutionPoint
 import capstone
 from capstone.arm import *
 import re

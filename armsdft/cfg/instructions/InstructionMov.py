@@ -1,5 +1,5 @@
-from armddft.cfg.instructions.AbstractInstructionTwoRegisters import AbstractInstructionTwoRegisters
-from armddft.cfg.StatusRegister import StatusRegister
+from armsdft.cfg.instructions.AbstractInstructionTwoRegisters import AbstractInstructionTwoRegisters
+from armsdft.cfg.StatusRegister import StatusRegister
 
 
 class InstructionMov(AbstractInstructionTwoRegisters):

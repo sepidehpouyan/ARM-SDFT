@@ -1,4 +1,4 @@
-from armddft.cfg.instructions.AbstractInstructionTwoRegisters import AbstractInstructionTwoRegisters 
+from armsdft.cfg.instructions.AbstractInstructionTwoRegisters import AbstractInstructionTwoRegisters 
 
 
 class InstructionCmp(AbstractInstructionTwoRegisters):

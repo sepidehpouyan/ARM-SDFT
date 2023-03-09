@@ -1,4 +1,4 @@
-from armddft.cfg.InstructionFactory import InstructionFactory
+from armsdft.cfg.InstructionFactory import InstructionFactory
 
 class Function:
     def __init__(self, name, program, file, caller=None):

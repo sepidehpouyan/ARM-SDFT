@@ -1,5 +1,5 @@
-from armddft.cfg.AbstractInstruction import AbstractInstruction
-from armddft.cfg.StatusRegister import StatusRegister
+from armsdft.cfg.AbstractInstruction import AbstractInstruction
+from armsdft.cfg.StatusRegister import StatusRegister
 
 
 class AbstractInstructionTwoRegisters(AbstractInstruction):       

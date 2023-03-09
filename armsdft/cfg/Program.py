@@ -1,5 +1,5 @@
 import networkx as nx
-from armddft.cfg.NetworkXConvert import NetworkXConvert
+from armsdft.cfg.NetworkXConvert import NetworkXConvert
 
 
 class Program:

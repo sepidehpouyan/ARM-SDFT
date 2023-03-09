@@ -1,6 +1,6 @@
-from armddft.verifier.SecurityLevel import SecurityLevel
-from armddft.verifier.AssignmentCollection import AssignmentCollection
-from armddft.cfg.AbstractInstruction import AbstractInstruction
+from armsdft.verifier.SecurityLevel import SecurityLevel
+from armsdft.verifier.AssignmentCollection import AssignmentCollection
+from armsdft.cfg.AbstractInstruction import AbstractInstruction
 
 
 class InstructionStr(AbstractInstruction):

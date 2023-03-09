@@ -1,5 +1,5 @@
-from armddft.cfg.StackPointer import StackPointer
-from armddft.cfg.AbstractInstruction import AbstractInstruction
+from armsdft.cfg.StackPointer import StackPointer
+from armsdft.cfg.AbstractInstruction import AbstractInstruction
 
 
 class InstructionLdr(AbstractInstruction):
@@ -9,6 +9,13 @@ class InstructionLdr(AbstractInstruction):
         return self.clock
 
     def execute_judgment(self, ac):
+        print("base reg: ", self.base_reg, "disp: ", self.disp, type(self.disp))
+        base_addr = self.program.reg_map.get(self.base_reg, None)
+        if base_addr is not None:
+            target_addr = base_addr + self.disp
+            print("target_addr:", target_addr)
+
+
         print("base reg: ", self.base_reg, "disp: ", self.disp, type(self.disp))
         base_addr = self.program.reg_map.get(self.base_reg, None)
         if base_addr is not None:

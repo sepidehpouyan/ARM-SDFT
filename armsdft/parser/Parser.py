@@ -1,7 +1,7 @@
-from armddft.cfg.InstructionFactory import InstructionFactory
-from armddft.cfg.AbstractInstruction import AbstractInstruction
-from armddft.cfg.Function import Function
-from armddft.cfg.Program import Program
+from armsdft.cfg.InstructionFactory import InstructionFactory
+from armsdft.cfg.AbstractInstruction import AbstractInstruction
+from armsdft.cfg.Function import Function
+from armsdft.cfg.Program import Program
 from elftools.elf.elffile import ELFFile
 from capstone.arm import *
 
