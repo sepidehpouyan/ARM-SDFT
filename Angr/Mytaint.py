@@ -4,62 +4,17 @@ import sys
 import logging
 import capstone
 
+cs = capstone.Cs(capstone.CS_ARCH_ARM, capstone.CS_MODE_THUMB)
 
-sensetive_branch_region = []
-non_sensetive_branch_region = []
-
-secret_regs = {}
-secret_addr = {}
+sensetive_branch_region = []#
+non_sensetive_branch_region = []#
+secret_regs = {}#
+secret_addr = {}#
 
 conditional_branch = ['beq', 'bne', 'bgt', 'blt', 'bge', 'ble']
-
-def track_writes(state):
-
-    reg_offset = state.inspect.reg_write_offset
-    reg_name = state.arch.register_names[state.solver.eval(reg_offset)]
-
-    #print('Write', state.inspect.reg_write_expr, 'to', reg_name, "state.ip: ", hex(state.scratch.ins_addr))
-    #print(f'State has information_leakage: {str(state.globals["information_leakage"])}')
-
-
-    expr = str(state.inspect.reg_write_expr)
-    if 'secret' in expr:
-        secret_regs.update({reg_name: hex(state.solver.eval(state.scratch.ins_addr))}) 
-
-    if reg_name in secret_regs:
-        if 'secret' not in expr: 
-            if secret_regs.get(reg_name) not in non_sensetive_branch_region:
-                secret_regs.pop(reg_name)
-
-    if hex(state.solver.eval(state.ip)) in sensetive_branch_region:
-        secret_regs.update({reg_name: hex(state.solver.eval(state.ip))})  
-
-def track_mem_writes(state):
-
-    #print('****************** Write', state.inspect.mem_write_expr, 'to', state.inspect.mem_write_address)
-    #print(f'State has information_leakage: {str(state.globals["information_leakage"])}')
-
-    expr = str(state.inspect.mem_write_expr)
-    mem_addr = hex(state.solver.eval(state.inspect.mem_write_address))
-    if 'secret' in expr:
-        secret_addr.update({mem_addr: hex(state.solver.eval(state.ip))}) 
-
-    if(mem_addr in secret_addr):
-        if 'secret' not in expr: 
-            if secret_addr.get(mem_addr) not in non_sensetive_branch_region:
-                secret_regs.pop(mem_addr)
-
-    if hex(state.solver.eval(state.ip)) in sensetive_branch_region:
-        secret_regs.update({mem_addr: hex(state.solver.eval(state.ip))}) 
-
-def track_forks(state):
-    print('####### forked')
-    # get_forked_state
-    state.globals['information_leakage'] = True
-
-def stop_information_leakage(state):
-    state.globals['information_leakage'] = False
-
+junction_dict = {'0x8159': '0x8161'}
+secret_branch = []
+nested_branch_list = []
 
 def print_state_backtrace_formatted(state):
     """
@@ -72,21 +27,70 @@ def print_state_backtrace_formatted(state):
         bbt.append(f'{a:#x} {sym.name:<35} ({rel:#x} relative to obj base)')
     print("\n".join(bbt))
 
+def track_writes(state):
+
+    reg_offset = state.inspect.reg_write_offset
+    reg_name = state.arch.register_names[state.solver.eval(reg_offset)]
+
+    print('Write', state.inspect.reg_write_expr, 'to', reg_name, "state.ip: ", hex(state.scratch.ins_addr))
+    print(f'State has information_leakage: {str(state.globals["secret_branching"])}')
+    
+    expr = str(state.inspect.reg_write_expr)
+    if 'secret' not in expr:
+        if state.globals["secret_branching"]:
+            reg = getattr(state.regs, reg_name)
+            reg = state.solver.BVS("{}_secret".format(reg_name), reg.size())
+            setattr(state.regs, reg_name, reg)
+
+def track_mem_writes(state):
+
+    print('------- Write', state.inspect.mem_write_expr, 'to', state.inspect.mem_write_address)
+    print(f'State has information_leakage: {str(state.globals["information_leakage"])}')
+
+    expr = str(state.inspect.mem_write_expr)
+    mem_addr = hex(state.solver.eval(state.inspect.mem_write_address))
+    if 'secret' not in expr:
+        if state.globals["secret_branching"]:
+            state.mem[mem_addr] = 'secret'
+    
+
+def stop_information_leakage(state):
+    print('stop_information_leakage')
+    state.globals['secret_branching'] = False
+
 def track_instruction(state):
-    print('___________****___________', hex(state.inspect.instruction))
-    # Get the executed instruction address
-    ip = state.recent_block.addr
-    # Get the bytes representing the instruction
-    instr_bytes = state.solver.eval(state.memory.load(ip, state.project.arch.instruction_length))
-    # Disassemble the instruction bytes
-    md = capstone.Cs(state.project.arch.capstone_type, state.project.arch.capstone_mode)
-    instr = next(md.disasm(instr_bytes, ip))
-    # Extract the instruction mnemonic and operands
-    mnemonic = instr.mnemonic
-    operands = instr.op_str
-    print(f"Executed instruction: {mnemonic} {operands}")
+    #print('___________****___________', state.inspect.instruction)
+    if state.inspect.instruction is not None:
+        block = state.project.factory.block(state.inspect.instruction)
+        insn = cs.disasm(block.bytes, state.inspect.instruction)
+        ins = insn.__next__()
+
+        #print(f"Current instruction: {ins.mnemonic} -- {ins.op_str}")
+
+    if ins.mnemonic in conditional_branch:
+        print('^^^^^branch^^^^^^')
+        if state.globals['state_reg_tainted']:
+            state.globals['secret_branching'] = True
+            print(ins.mnemonic, hex(state.inspect.instruction))
+            secret_branch.append(hex(state.inspect.instruction))
+        if state.globals['nested_branch']:
+            nested_branch_list.append(hex(state.inspect.instruction))
+
+    elif ins.mnemonic in ['cmp'] and state.globals['secret_branching']:
+        state.globals['nested_branch'] = True
+
+    elif ins.mnemonic in ['cmp'] and not state.globals['secret_branching']:
+        parts = ins.op_str.split(', ')
+        is_tainted = False
+        for p in parts:
+            reg = getattr(state.regs, p)
+            if 'secret' in str(reg):
+                is_tainted = True
+        
+        state.globals['state_reg_tainted'] = is_tainted
 
 #----------------------------------------------------------------------------------  
+
 def main():
     logging.disable(logging.WARNING)
     input_reg = []
@@ -111,33 +115,33 @@ def main():
     main_addr = proj.loader.main_object.get_symbol("main").rebased_addr
     state = proj.factory.entry_state(addr=main_addr)
     state.globals['information_leakage'] = False
-#---------------------------------------------------------------------------------- 
+    state.globals['state_reg_tainted'] =  False
+    state.globals['secret_branching'] =  False
+    state.globals['nested_branch'] =  False
+#----------------------------------Initial register tagging --------------------------------- 
     for reg_name in input_reg:
         reg = getattr(state.regs, reg_name)
         reg = state.solver.BVS("{}_secret".format(reg_name), reg.size())
         setattr(state.regs, reg_name, reg)
-#---------------------------------------------------------------------------------- 
+#------------------------------------Set Breakpoint ------------------------------------------ 
     state.inspect.b('reg_write', when=angr.BP_AFTER, action=track_writes)
     state.inspect.b('mem_write', when=angr.BP_AFTER, action=track_mem_writes)
-    state.inspect.b('instruction', when=angr.BP_AFTER, action=track_instruction)
-    state.inspect.b('fork', when=angr.BP_BEFORE, action=track_forks)
+    state.inspect.b('instruction', when=angr.BP_BEFORE, action=track_instruction)
 
-    junction_list = []
-
-    for junction in junction_list:
-        state.inspect.hook(junction, stop_information_leakage)
-#----------------------------------------------------------------------------------  
+    for junction in junction_dict:
+        if junction not in nested_branch_list:
+            state.project.hook(int(junction_dict[junction], 16), stop_information_leakage)
+#--------------------------------------Symbolic Executing ------------------------------------  
     simgr = proj.factory.simulation_manager(state)
 
     while len(simgr.active) > 0:
         simgr.step()
 
     
-    print(secret_addr)
     #print(f'number of deadended states: {str(simgr.stashes)}')
     for s in simgr.unconstrained:
         #print_state_backtrace_formatted(s)
-        print('--------------\n')
+        print('-----------------------------------------------\n')
         for reg_name in proj.arch.register_names.values():
             reg = getattr(s.regs, reg_name)
             if 'secret' in str(reg):
