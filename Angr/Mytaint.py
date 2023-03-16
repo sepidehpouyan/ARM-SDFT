@@ -6,11 +6,6 @@ import capstone
 
 cs = capstone.Cs(capstone.CS_ARCH_ARM, capstone.CS_MODE_THUMB)
 
-sensetive_branch_region = []#
-non_sensetive_branch_region = []#
-secret_regs = {}#
-secret_addr = {}#
-
 conditional_branch = ['beq', 'bne', 'bgt', 'blt', 'bge', 'ble']
 junction_dict = {'0x8159': '0x8161'}
 secret_branch = []
@@ -32,31 +27,35 @@ def track_writes(state):
     reg_offset = state.inspect.reg_write_offset
     reg_name = state.arch.register_names[state.solver.eval(reg_offset)]
 
-    print('Write', state.inspect.reg_write_expr, 'to', reg_name, "state.ip: ", hex(state.scratch.ins_addr))
-    print(f'State has information_leakage: {str(state.globals["secret_branching"])}')
+    #print('Write', state.inspect.reg_write_expr, 'to', reg_name, "state.ip: ", hex(state.scratch.ins_addr))
+    #print(f'State has information_leakage: {str(state.globals["secret_branching"])}')
     
-    expr = str(state.inspect.reg_write_expr)
-    if 'secret' not in expr:
+    expr = state.inspect.reg_write_expr
+    if 'secret' not in str(expr):
         if state.globals["secret_branching"]:
-            reg = getattr(state.regs, reg_name)
-            reg = state.solver.BVS("{}_secret".format(reg_name), reg.size())
+            expr.name = 'secret'
+            reg = state.solver.BVS("{}_secret".format(str(expr)), expr.size())
             setattr(state.regs, reg_name, reg)
 
 def track_mem_writes(state):
 
-    print('------- Write', state.inspect.mem_write_expr, 'to', state.inspect.mem_write_address)
-    print(f'State has information_leakage: {str(state.globals["information_leakage"])}')
+    #print('------- Write', state.inspect.mem_write_expr, 'to', state.inspect.mem_write_address)
+    #print(f'State has information_leakage: {str(state.globals["secret_branching"])}')
 
-    expr = str(state.inspect.mem_write_expr)
-    mem_addr = hex(state.solver.eval(state.inspect.mem_write_address))
-    if 'secret' not in expr:
+    expr = state.inspect.mem_write_expr
+    mem_addr = state.solver.eval(state.inspect.mem_write_address)
+    if 'secret' not in str(expr):
         if state.globals["secret_branching"]:
-            state.mem[mem_addr] = 'secret'
+            reg = state.solver.BVS("{}_secret".format(str(expr)), expr.size())
+            state.mem[mem_addr] = reg
     
 
 def stop_information_leakage(state):
-    print('stop_information_leakage')
-    state.globals['secret_branching'] = False
+    if state.globals['secret_branching']:
+        state.globals['branch_number'] -= 1
+    if state.globals['branch_number'] == 0:
+        print('stop_information_leakage')
+        state.globals['secret_branching'] = False
 
 def track_instruction(state):
     #print('___________****___________', state.inspect.instruction)
@@ -73,11 +72,7 @@ def track_instruction(state):
             state.globals['secret_branching'] = True
             print(ins.mnemonic, hex(state.inspect.instruction))
             secret_branch.append(hex(state.inspect.instruction))
-        if state.globals['nested_branch']:
-            nested_branch_list.append(hex(state.inspect.instruction))
-
-    elif ins.mnemonic in ['cmp'] and state.globals['secret_branching']:
-        state.globals['nested_branch'] = True
+            state.globals['branch_number'] += 1 
 
     elif ins.mnemonic in ['cmp'] and not state.globals['secret_branching']:
         parts = ins.op_str.split(', ')
@@ -114,10 +109,9 @@ def main():
     main_size = proj.loader.main_object.get_symbol("main").size
     main_addr = proj.loader.main_object.get_symbol("main").rebased_addr
     state = proj.factory.entry_state(addr=main_addr)
-    state.globals['information_leakage'] = False
     state.globals['state_reg_tainted'] =  False
     state.globals['secret_branching'] =  False
-    state.globals['nested_branch'] =  False
+    state.globals['branch_number'] = 0 #----******
 #----------------------------------Initial register tagging --------------------------------- 
     for reg_name in input_reg:
         reg = getattr(state.regs, reg_name)
@@ -129,8 +123,7 @@ def main():
     state.inspect.b('instruction', when=angr.BP_BEFORE, action=track_instruction)
 
     for junction in junction_dict:
-        if junction not in nested_branch_list:
-            state.project.hook(int(junction_dict[junction], 16), stop_information_leakage)
+        state.project.hook(int(junction_dict[junction], 16), stop_information_leakage)
 #--------------------------------------Symbolic Executing ------------------------------------  
     simgr = proj.factory.simulation_manager(state)
 
@@ -138,7 +131,8 @@ def main():
         simgr.step()
 
     
-    #print(f'number of deadended states: {str(simgr.stashes)}')
+    #print('secret_branch_list: ', secret_branch)
+    print(f'number of deadended states: {str(simgr.stashes)}')
     for s in simgr.unconstrained:
         #print_state_backtrace_formatted(s)
         print('-----------------------------------------------\n')
