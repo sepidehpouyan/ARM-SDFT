@@ -14,6 +14,67 @@ secret_branch = []
 
 
 #---------------------------------------------------------------------------------------------------------
+# Trustzone aware memory
+#---------------------------------------------------------------------------------------------------------
+
+class TrustzoneAwareMemory(
+    # HexDumperMixin, # adds the hex_dump function which is quite slow
+    SmartFindMixin,
+    UnwrapperMixin, # description: processes SimActionObjects by passing on their .ast field.
+    NameResolutionMixin, # description: allows you to provide register names as load addresses, and will automatically translate this to an offset and size.
+    DataNormalizationMixin, # description: Normalizes the data field for a store and the fallback field for a load to be BVs.
+    SimplificationMixin, # hooks stores and first calls state.solver.simplify(data) if options.SIMPLIFY_[MEMORY/REGISTER]_WRITES is set
+    InspectMixinHigh, # The logic to inspect memory/register reads/writes --> calls ._inspect before/after.
+    ActionsMixinHigh,
+    UnderconstrainedMixin,
+    SizeConcretizationMixin,
+    SizeNormalizationMixin,
+    TrustzoneAwareMixin,     # Trustzone mixin that does the secret tainting
+    AddressConcretizationMixin,
+    #InspectMixinLow,
+    ActionsMixinLow,
+    ConditionalMixin,
+    ConvenientMappingsMixin,
+    DirtyAddrsMixin,
+    # -----
+    StackAllocationMixin,
+    ConcreteBackerMixin,
+    ClemoryBackerMixin,
+    DictBackerMixin,
+    PrivilegedPagingMixin,
+    UltraPagesMixin,
+    DefaultFillerMixin,
+    SymbolicMergerMixin,
+
+    # Paged memory that dispatches to individual pages.
+    # Needs size and addr of both store and load to be concretized (int)
+    # PagedMemoryMixin does not return a context and is the last mixin to execute
+    PagedMemoryMixin,
+
+):
+    pass
+
+#---------------------------------------------------------------------------------------------------------
+
+
+class TrustzoneAwareMixin(MemoryMixin):
+
+    def store(self, addr, data, **kwargs):
+
+        new_data = data
+
+        if self.state.globals["secret_branching"]:
+            print('Write', data, 'to', addr, "state.ip: ", hex(self.state.scratch.ins_addr))
+            if not is_tainted(data):
+                new_data = data.append_annotation(TaintedAnnotation())
+
+        r = super().store(addr, new_data, **kwargs)
+
+        # do something else
+
+        return r
+
+#---------------------------------------------------------------------------------------------------------
 class TaintedAnnotation(claripy.Annotation):
     """
     Annotation for doing taint-tracking in angr.
@@ -114,13 +175,13 @@ def track_instruction(state):
 
     elif ins.mnemonic in ['cmp'] and not state.globals['secret_branching']:
         parts = ins.op_str.split(', ')
-        is_tainted = False
+        reg_is_tainted = False
         for p in parts:
             reg = getattr(state.regs, p)
-            if 'secret' in str(reg):
-                is_tainted = True
+            if is_tainted(reg):
+                reg_is_tainted = True
         
-        state.globals['state_reg_tainted'] = is_tainted
+        state.globals['state_reg_tainted'] = reg_is_tainted
 
 #----------------------------------------------------------------------------------  
 
@@ -142,6 +203,8 @@ def main():
             input_reg.append('r' + str(r))
         r += 1
 #----------------------------------------------------------------------------------    
+    from angr.sim_state import SimState
+    SimState.register_default('sym_memory', TrustzoneAwareMemory)
     proj = angr.Project('fork', load_options={'auto_load_libs': False})
     
     main_size = proj.loader.main_object.get_symbol("main").size
