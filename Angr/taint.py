@@ -1,92 +1,132 @@
 import angr
+import claripy
 import json
 import sys
+import logging
+import capstone
 
-input_reg = []
 
-sensetive_branch_region = []
-non_sensetive_branch_region = []
+cs = capstone.Cs(capstone.CS_ARCH_ARM, capstone.CS_MODE_THUMB)
 
-secret_regs = {}
-secret_addr = {}
+conditional_branch = ['beq', 'bne', 'bgt', 'blt', 'bge', 'ble']
+junction_dict = {'0x8159': '0x8161'}
+secret_branch = []
 
-#main_addr = -1
-#main_size =  0
 
-proj = angr.Project('fork', load_options={'auto_load_libs': False})
+#---------------------------------------------------------------------------------------------------------
+class TaintedAnnotation(claripy.Annotation):
+    """
+    Annotation for doing taint-tracking in angr.
+    """
     
-main_size = proj.loader.main_object.get_symbol("main").size
-main_addr = proj.loader.main_object.get_symbol("main").rebased_addr
-    #main_end_addr = main_addr + main_size - 2
-    #print(f'End of main @ {main_end_addr:#x}')
+    @property
+    def eliminatable(self):
+        return False
 
-class ExitState(angr.SimProcedure):
-    """
-    Simple Procedure that just aborts the exploration of this state.
-    """
-    def run(self, return_values=None):
-        self.exit(0)
+    @property
+    def relocatable(self):
+        return True
 
-class MainState(angr.SimProcedure):
-   
-    def run(self, return_values=None):
-        print(f'Tainting registers as secret now: {input_reg}')
-        for reg_name in input_reg:
-            reg = getattr(self.state.regs, reg_name)
-            reg = self.state.solver.BVS("{}_secret".format(reg_name), reg.size())
-            setattr(self.state.regs, reg_name, reg)
-        #for reg_name in self.state.project.arch.register_names.values():
-            #print(f'{reg_name} : {getattr(self.state.regs, reg_name)}')
+    def relocate(self, src, dst):
+        srcAnnotations = list(src.annotations)
+        if len(srcAnnotations) == 0: return None
+        elif len(srcAnnotations) == 1: return srcAnnotations[0]
+        else: raise ValueError("more than one annotation: {}".format(srcAnnotations))
 
-        #ret_addr = self.state.solver.eval(self.state.regs.lr)
-        #print(f'Hooking lr @ {ret_addr:#x}')  
-        #self.project.hook(ret_addr, MainExitState())
+def taintedUnconstrainedBits(state, name, bits):
+    """
+    name: a name for the BVS
+    bits: how many bits long
+    """
+    return state.solver.Unconstrained(name, bits, key=("tainted_"+name,), eternal=False, annotations=(TaintedAnnotation(),))
 
-class MainExitState(angr.SimProcedure):
+def is_tainted(ast):
+    return _is_immediately_tainted(ast) or any(_is_immediately_tainted(v) for v in ast.leaf_asts())
+
+def _is_immediately_tainted(ast):
+    return any(isinstance(a, TaintedAnnotation) for a in ast.annotations)
+
+
+#---------------------------------------------------------------------------------------------------------
+
+def print_state_backtrace_formatted(state):
     """
-    Simple Procedure that just aborts the exploration of this state.
+    Returns the block backtrace for a given state, formatted as a list of strings that can be printed immediately.
     """
-    def run(self, return_values=None):
-        print(f'Check registers')
-        for reg_name in self.state.project.arch.register_names.values():
-            reg_value = getattr(self.state.regs, reg_name)
-            print(f'on exit: {reg_name} : {reg_value}')
-            if 'secret' in str(reg_value):
-                secret_regs[reg_name] = self.state.ip
-        self.exit(0)
+    bbt = []
+    for a in state.history.bbl_addrs:
+        sym = state.project.loader.find_symbol(a, fuzzy=True)
+        rel = a - state.project.loader.min_addr
+        bbt.append(f'{a:#x} {sym.name:<35} ({rel:#x} relative to obj base)')
+    print("\n".join(bbt))
 
 def track_writes(state):
 
     reg_offset = state.inspect.reg_write_offset
     reg_name = state.arch.register_names[state.solver.eval(reg_offset)]
 
-    print('Write', state.inspect.reg_write_expr, 'to', reg_name)
-    print(hex(state.solver.eval(state.ip)))
+    #print('Write', state.inspect.reg_write_expr, 'to', reg_name, "state.ip: ", hex(state.scratch.ins_addr))
+    #print(f'State has information_leakage: {str(state.globals["secret_branching"])}')
+    
+    expr = state.inspect.reg_write_expr
+    if 'secret' not in str(expr):
+        if state.globals["secret_branching"]:
+            print('Write', state.inspect.reg_write_expr, 'to', reg_name, "state.ip: ", hex(state.scratch.ins_addr))
+            state.inspect.reg_write_expr = expr.append_annotation(TaintedAnnotation())
+   
 
-    expr = str(state.inspect.reg_write_expr)
-    if 'secret' in expr:
-        if (main_addr <= state.solver.eval(state.ip) < (main_addr+main_size)):
-            print('helooooo')
-            secret_regs[reg_name] = hex(state.solver.eval(state.ip))
-'''
-    if reg_name in secret_regs:
-        if 'secret' not in expr: 
-            if secret_regs.get(reg_name) not in non_sensetive_branch_region:
-                secret_regs.pop(reg_name)
-
-    if state.ip in sensetive_branch_region:
-        secret_regs.update({reg_name: state.ip})  
-'''
 def track_mem_writes(state):
 
-    print('****************** Write', state.inspect.mem_write_expr, 'to', state.inspect.mem_write_address)
-     
-    expr = str(state.inspect.mem_write_expr)
-    if 'secret' in expr:
-        secret_addr.update({hex(state.solver.eval(state.inspect.mem_write_address)): state.ip}) 
+    #print('------- Write', state.inspect.mem_write_expr, 'to', state.inspect.mem_write_address)
+    #print(f'State has information_leakage: {str(state.globals["secret_branching"])}')
+
+    expr = state.inspect.mem_write_expr
+    mem_addr = state.solver.eval(state.inspect.mem_write_address)
+    #if 'secret' not in str(expr):
+        #if state.globals["secret_branching"]:
+            #state.inspect.mem_write_expr = expr.append_annotation(TaintedAnnotation())
+    
+
+def stop_information_leakage(state):
+    print("hiiiiiiiiiiiiii")
+    if state.globals['secret_branching']:
+        state.globals['branch_number'] -= 1
+    if state.globals['branch_number'] == 0:
+        print('stop_information_leakage')
+        state.globals['secret_branching'] = False
+
+def track_instruction(state):
+    #print('___________****___________', state.inspect.instruction)
+    if state.inspect.instruction is not None:
+        block = state.project.factory.block(state.inspect.instruction)
+        insn = cs.disasm(block.bytes, state.inspect.instruction)
+        ins = insn.__next__()
+
+        #print(f"Current instruction: {ins.mnemonic} -- {ins.op_str}")
+
+    if ins.mnemonic in conditional_branch:
+        print('^^^^^branch^^^^^^')
+        if state.globals['state_reg_tainted']:
+            state.globals['secret_branching'] = True
+            print(ins.mnemonic, hex(state.inspect.instruction))
+            secret_branch.append(hex(state.inspect.instruction))
+            state.globals['branch_number'] += 1 
+
+    elif ins.mnemonic in ['cmp'] and not state.globals['secret_branching']:
+        parts = ins.op_str.split(', ')
+        is_tainted = False
+        for p in parts:
+            reg = getattr(state.regs, p)
+            if 'secret' in str(reg):
+                is_tainted = True
+        
+        state.globals['state_reg_tainted'] = is_tainted
+
+#----------------------------------------------------------------------------------  
 
 def main():
-
+    logging.disable(logging.WARNING)
+    input_reg = []
     args = sys.argv
     if args is None or len(args) < 2:
         print('Run using a path to a json file')
@@ -102,28 +142,54 @@ def main():
             input_reg.append('r' + str(r))
         r += 1
 #----------------------------------------------------------------------------------    
-    state = proj.factory.entry_state()
-#---------------------------------------------------------------------------------- 
-    proj.hook_symbol('main', MainState())
-    proj.hook(main_addr+main_size, ExitState())
-    #proj.hook_symbol('_exit', ExitState())
-#----------------------------------------------------------------------------------  
+    proj = angr.Project('fork', load_options={'auto_load_libs': False})
+    
+    main_size = proj.loader.main_object.get_symbol("main").size
+    main_addr = proj.loader.main_object.get_symbol("main").rebased_addr
+    state = proj.factory.entry_state(addr=main_addr)
+    state.globals['state_reg_tainted'] =  False
+    state.globals['secret_branching'] =  False
+    state.globals['branch_number'] = 0 #----******
+#----------------------------------Initial register tagging --------------------------------- 
+    for reg_name in input_reg:
+        reg = getattr(state.regs, reg_name)
+        print(type(reg), reg)
+        #reg = state.solver.BVS("{}_secret".format(reg_name), reg.size())
+        new_reg = reg.append_annotation(TaintedAnnotation())
+        setattr(state.regs, reg_name, new_reg)
+        print(new_reg.annotations)
+        print(is_tainted(new_reg))
+#------------------------------------Set Breakpoint ------------------------------------------ 
     state.inspect.b('reg_write', when=angr.BP_AFTER, action=track_writes)
-    #state.inspect.b('mem_write', when=angr.BP_AFTER, action=track_mem_writes)
-#----------------------------------------------------------------------------------  
+    state.inspect.b('mem_write', when=angr.BP_AFTER, action=track_mem_writes)
+    state.inspect.b('instruction', when=angr.BP_BEFORE, action=track_instruction)
+
+    for junction in junction_dict:
+        state.project.hook(int(junction_dict[junction], 16), stop_information_leakage)
+#--------------------------------------Symbolic Executing ------------------------------------  
     simgr = proj.factory.simulation_manager(state)
-  
 
     while len(simgr.active) > 0:
-        #print(f'----------------------------------------------------------------------------------')
-        #print(f'Making a step. Have {len(simgr.active)} active and {simgr.deadended} deadended states.')
-        #print(f'----------------------------------------------------------------------------------')
         simgr.step()
 
+    
+    #print('secret_branch_list: ', secret_branch)
+    print(f'number of deadended states: {str(simgr.stashes)}')
+    for s in simgr.unconstrained:
+        #print_state_backtrace_formatted(s)
+        print('-----------------------------------------------\n')
+        for reg_name in proj.arch.register_names.values():
+            reg = getattr(s.regs, reg_name)
+            if is_tainted(reg): #'secret' in str(reg):
+                print(reg_name, reg)
+    
+        changed_bytes_list = s.memory.changed_bytes(state.memory)
+        for addr in changed_bytes_list:
+            value = s.memory.load(addr, 1)
+            if 'secret' in str(value):
+                print(hex(addr), value)
 
-    print(secret_regs)
-    print(secret_addr)
-
+#----------------------------------------------------------------------------------  
 
 if __name__ == '__main__':
     sys.exit(main())
