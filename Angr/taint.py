@@ -198,12 +198,15 @@ def track_instruction(state):
             #state.globals['branch_number'] += 1 
 
     elif ins.mnemonic in ['cmp'] and not state.globals['secret_branching']:
+        print("&&&&&&&&&&&&&&&&& inside the cmp &&&&&&&&&&&&&&&&&")
         parts = ins.op_str.split(', ')
+        print(parts)
         reg_is_tainted = False
         for p in parts:
-            reg = getattr(state.regs, p)
-            if is_tainted(reg):
-                reg_is_tainted = True
+            if 'r' in p:
+                reg = getattr(state.regs, p)
+                if is_tainted(reg):
+                    reg_is_tainted = True
         
         state.globals['state_reg_tainted'] = reg_is_tainted
 
@@ -231,7 +234,7 @@ def main():
 #----------------------------------------------------------------------------------   
     from angr.sim_state import SimState
     SimState.register_default('sym_memory', TrustzoneAwareMemory)
-    proj = angr.Project('testcase/array', load_options={'auto_load_libs': False})
+    proj = angr.Project('testcase/call', load_options={'auto_load_libs': False})
     
     main_size = proj.loader.main_object.get_symbol("main").size
     main_addr = proj.loader.main_object.get_symbol("main").rebased_addr
