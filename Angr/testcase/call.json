@@ -1,0 +1,14 @@
+{
+	"file": "Angr/testcase/call",
+	"starting_function": "main",
+	"timing_sensitive": true,
+	"parameters": [{
+			"confidential": true 
+		}, {
+		    "confidential": false
+		}
+	],
+	"result": {
+		"confidential": true
+	}
+}

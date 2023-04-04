@@ -4,21 +4,56 @@ import json
 import sys
 import logging
 import capstone
+from angr.storage import MemoryMixin
 
 from angr.storage.memory_mixins import PagedMemoryMixin, SymbolicMergerMixin, DefaultFillerMixin, UltraPagesMixin, \
     PrivilegedPagingMixin, DictBackerMixin, ClemoryBackerMixin, ConcreteBackerMixin, StackAllocationMixin, \
     DirtyAddrsMixin, ConvenientMappingsMixin, ConditionalMixin, ActionsMixinLow, AddressConcretizationMixin, \
     SizeNormalizationMixin, SizeConcretizationMixin, UnderconstrainedMixin, ActionsMixinHigh, InspectMixinHigh, \
-    DataNormalizationMixin, NameResolutionMixin, UnwrapperMixin, SmartFindMixin
-
+    DataNormalizationMixin, NameResolutionMixin, UnwrapperMixin, SmartFindMixin, SimplificationMixin
 
 
 cs = capstone.Cs(capstone.CS_ARCH_ARM, capstone.CS_MODE_THUMB)
 
+register_list = ['r11', 'ip', 'sp', 'pc', 'lr', "cc_op", 'cc_dep1', "cc_dep2",  
+                "cc_ndep", "qflag32", "geflag0", "geflag1", "geflag2", "geflag3", 
+                "emnote", "cmstart", "cmlen", "nraddr", "ip_at_syscall",
+                "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10",
+                "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "d20", 
+                "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29", "d30", "d31", "fpscr", "tpidruro", "itstate"]
+
 conditional_branch = ['beq', 'bne', 'bgt', 'blt', 'bge', 'ble']
-junction_dict = {'0x8159': '0x8161'}
+junction_dict = {'0x8169': '0x8179'}
+#array {'0x8159': '0x817d'} #diamond {'0x8159': '0x8173', '0x8178': '0x8181'} # fork {'0x8159': '0x8161'}
 secret_branch = []
 
+
+class TrustzoneAwareMixin(MemoryMixin):
+
+    def store(self, addr, data, **kwargs):
+        reg_name =  ''
+        print('before if', data, 'to', addr)
+        print(self.category)
+        if (self.category == 'reg'):
+            reg_name = self.state.arch.register_names[self.state.solver.eval(addr)]
+            print(reg_name)
+        if is_tainted(data):
+            print('yessssssssssssssssssss it is tainted')
+
+
+        new_data = data
+
+        if 'secret_branching' in self.state.globals and self.state.globals["secret_branching"]:
+            print('Write', data, 'to', addr, "state.ip: ", hex(self.state.scratch.ins_addr))
+            if not is_tainted(data) and reg_name not in register_list:
+                print('data is not tainted and [r0 - r10]/mem  ^^^^^^^^^^((((((((^ | ^))))))))')
+                new_data = data.append_annotation(TaintedAnnotation())
+
+        r = super().store(addr, new_data, **kwargs)
+
+        # do something else
+
+        return r
 
 #---------------------------------------------------------------------------------------------------------
 # Trustzone aware memory
@@ -63,25 +98,6 @@ class TrustzoneAwareMemory(
 
 #---------------------------------------------------------------------------------------------------------
 
-
-class TrustzoneAwareMixin(MemoryMixin):
-
-    def store(self, addr, data, **kwargs):
-
-        new_data = data
-
-        if self.state.globals["secret_branching"]:
-            print('Write', data, 'to', addr, "state.ip: ", hex(self.state.scratch.ins_addr))
-            if not is_tainted(data):
-                new_data = data.append_annotation(TaintedAnnotation())
-
-        r = super().store(addr, new_data, **kwargs)
-
-        # do something else
-
-        return r
-
-#---------------------------------------------------------------------------------------------------------
 class TaintedAnnotation(claripy.Annotation):
     """
     Annotation for doing taint-tracking in angr.
@@ -114,7 +130,6 @@ def is_tainted(ast):
 def _is_immediately_tainted(ast):
     return any(isinstance(a, TaintedAnnotation) for a in ast.annotations)
 
-
 #---------------------------------------------------------------------------------------------------------
 
 def print_state_backtrace_formatted(state):
@@ -128,6 +143,7 @@ def print_state_backtrace_formatted(state):
         bbt.append(f'{a:#x} {sym.name:<35} ({rel:#x} relative to obj base)')
     print("\n".join(bbt))
 
+
 def track_writes(state):
 
     reg_offset = state.inspect.reg_write_offset
@@ -137,12 +153,12 @@ def track_writes(state):
     #print(f'State has information_leakage: {str(state.globals["secret_branching"])}')
     
     expr = state.inspect.reg_write_expr
-    if 'secret' not in str(expr):
+    if not is_tainted(expr):
         if state.globals["secret_branching"]:
-            print('Write', state.inspect.reg_write_expr, 'to', reg_name, "state.ip: ", hex(state.scratch.ins_addr))
-            state.inspect.reg_write_expr = expr.append_annotation(TaintedAnnotation())
+            if reg_name in register_list:
+                print('Write', state.inspect.reg_write_expr, 'to', reg_name, "state.ip: ", hex(state.scratch.ins_addr))
+                state.inspect.reg_write_expr = expr.append_annotation(TaintedAnnotation())
    
-
 def track_mem_writes(state):
 
     #print('------- Write', state.inspect.mem_write_expr, 'to', state.inspect.mem_write_address)
@@ -150,16 +166,17 @@ def track_mem_writes(state):
 
     expr = state.inspect.mem_write_expr
     mem_addr = state.solver.eval(state.inspect.mem_write_address)
-    #if 'secret' not in str(expr):
-        #if state.globals["secret_branching"]:
-            #state.inspect.mem_write_expr = expr.append_annotation(TaintedAnnotation())
-    
+    if not is_tainted(expr):
+        if state.globals["secret_branching"]:
+            print('------- Write', state.inspect.mem_write_expr, 'to', state.inspect.mem_write_address)
+            state.inspect.mem_write_expr = expr.append_annotation(TaintedAnnotation())
+
 
 def stop_information_leakage(state):
-    print("hiiiiiiiiiiiiii")
     if state.globals['secret_branching']:
-        state.globals['branch_number'] -= 1
-    if state.globals['branch_number'] == 0:
+        #print("^^^^^^^^^^^^please do it correctly: ", state.globals['branch_number'], "state.ip: ", hex(state.scratch.ins_addr))
+        #state.globals['branch_number'] -= 1
+    #if state.globals['branch_number'] == 0:
         print('stop_information_leakage')
         state.globals['secret_branching'] = False
 
@@ -178,7 +195,7 @@ def track_instruction(state):
             state.globals['secret_branching'] = True
             print(ins.mnemonic, hex(state.inspect.instruction))
             secret_branch.append(hex(state.inspect.instruction))
-            state.globals['branch_number'] += 1 
+            #state.globals['branch_number'] += 1 
 
     elif ins.mnemonic in ['cmp'] and not state.globals['secret_branching']:
         parts = ins.op_str.split(', ')
@@ -190,7 +207,7 @@ def track_instruction(state):
         
         state.globals['state_reg_tainted'] = reg_is_tainted
 
-#----------------------------------------------------------------------------------  
+#-----------------------------------Main-----------------------------------------------  
 
 def main():
     logging.disable(logging.WARNING)
@@ -210,37 +227,42 @@ def main():
             input_reg.append('r' + str(r))
         r += 1
 #----------------------------------------------------------------------------------    
+
+#----------------------------------------------------------------------------------   
     from angr.sim_state import SimState
     SimState.register_default('sym_memory', TrustzoneAwareMemory)
-    proj = angr.Project('fork', load_options={'auto_load_libs': False})
+    proj = angr.Project('testcase/array', load_options={'auto_load_libs': False})
     
     main_size = proj.loader.main_object.get_symbol("main").size
     main_addr = proj.loader.main_object.get_symbol("main").rebased_addr
     state = proj.factory.entry_state(addr=main_addr)
     state.globals['state_reg_tainted'] =  False
     state.globals['secret_branching'] =  False
-    state.globals['branch_number'] = 0 #----******
 #----------------------------------Initial register tagging --------------------------------- 
     for reg_name in input_reg:
         reg = getattr(state.regs, reg_name)
-        print(type(reg), reg)
-        #reg = state.solver.BVS("{}_secret".format(reg_name), reg.size())
         new_reg = reg.append_annotation(TaintedAnnotation())
         setattr(state.regs, reg_name, new_reg)
-        print(new_reg.annotations)
-        print(is_tainted(new_reg))
 #------------------------------------Set Breakpoint ------------------------------------------ 
-    state.inspect.b('reg_write', when=angr.BP_AFTER, action=track_writes)
-    state.inspect.b('mem_write', when=angr.BP_AFTER, action=track_mem_writes)
+    #state.inspect.b('reg_write', when=angr.BP_AFTER, action=track_writes)
+    #state.inspect.b('mem_write', when=angr.BP_AFTER, action=track_mem_writes)
     state.inspect.b('instruction', when=angr.BP_BEFORE, action=track_instruction)
 
-    for junction in junction_dict:
+    for junction in junction_dict:        
         state.project.hook(int(junction_dict[junction], 16), stop_information_leakage)
 #--------------------------------------Symbolic Executing ------------------------------------  
     simgr = proj.factory.simulation_manager(state)
 
+    tech = angr.exploration_techniques.DFS()
+    simgr.use_technique(tech)
+
     while len(simgr.active) > 0:
+        print("^^^^^^^^^^^^^^^^^^^^^^^^^^: ", simgr.active)
         simgr.step()
+        # move all but one state from simgr.active to simgr.later
+        # if len(simgr.active) == 0 but len(simgr.later) > 0:
+        # move one from simgr.later to simgr.active
+        # simgr.move(from_stash='active', to_stash='incorrect', filter_func=lambda x: x in wrong_jumps)
 
     
     #print('secret_branch_list: ', secret_branch)
@@ -250,13 +272,13 @@ def main():
         print('-----------------------------------------------\n')
         for reg_name in proj.arch.register_names.values():
             reg = getattr(s.regs, reg_name)
-            if is_tainted(reg): #'secret' in str(reg):
+            if is_tainted(reg):
                 print(reg_name, reg)
     
         changed_bytes_list = s.memory.changed_bytes(state.memory)
         for addr in changed_bytes_list:
             value = s.memory.load(addr, 1)
-            if 'secret' in str(value):
+            if is_tainted(value):
                 print(hex(addr), value)
 
 #----------------------------------------------------------------------------------  

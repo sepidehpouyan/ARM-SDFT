@@ -1,11 +1,10 @@
 {
-	"file": "testcase/fork",
+	"file": "testcase/ifthenloopif",
 	"starting_function": "main",
 	"timing_sensitive": true,
 	"parameters": [{
 			"confidential": true 
-		}, 
-		{
+		}, {
 		    "confidential": false
 		}
 	],

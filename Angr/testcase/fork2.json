@@ -1,5 +1,5 @@
 {
-	"file": "testcase/array",
+	"file": "Angr/testcase/fork2",
 	"starting_function": "main",
 	"timing_sensitive": true,
 	"parameters": [{
