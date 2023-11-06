@@ -2,9 +2,11 @@
 import json
 import sys
 
-from armsdft.verifier.Analysis import Analysis
-from armsdft.parser.ConfigParser import ConfigParser
-from armsdft.parser.Parser import Parser
+from scfarm.parser.ConfigParser import ConfigParser
+from scfarm.parser.Parser import Parser
+from scfarm.flowanalysis.Angr import Angr 
+from scfarm.flowanalysis.Analysis import Analysis
+
 
 def main():
     args = sys.argv
@@ -14,15 +16,18 @@ def main():
 
     config_parser = ConfigParser()
     config_parser.parse_file(args[1])
+    config_parser.get_security_level()
     program = Parser.parse_file(config_parser.get_file_path(), config_parser.get_starting_function())
-
-    analysis = Analysis(program)
+    
     starting_ep = program.functions[config_parser.get_starting_function()].\
         first_instruction.get_execution_point()
-    starting_ac = config_parser.get_starting_ac()
-    finishing_ac = config_parser.get_finishing_ac()
-    timing_sensitive = config_parser.get_timing_sensitive()
-    result = analysis.analyze(starting_ep, starting_ac, finishing_ac, timing_sensitive)
+    junction = program.set_entry_point(starting_ep)
+
+    angr = Angr(config_parser.get_file_path(), config_parser.get_starting_function())
+    secret_branch = angr.check_info_flow(config_parser.get_security_level(), junction)
+
+    analysis = Analysis(program)
+    result = analysis.analyze(starting_ep, secret_branch)
 
     output = {
         'result': result.result.name,
@@ -30,8 +35,7 @@ def main():
         'execution_point': None if result.ep is None else {
             'function': result.ep.function,
             'address': hex(result.ep.address)
-        },
-        'unique_ret': str(result.unique_ret)
+        }
     }
     print(json.dumps(output))
 
@@ -39,44 +43,3 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
-
-
-
-    #print(cap_ins)# <>
-            #print(cap_ins.mnemonic) # addseq
-            #print("length: ", len(cap_ins.bytes))
-            #print("operand: ", cap_ins.op_str) #<r1, r7>
-            #print("id: ", cap_ins.id , "address: ", hex(cap_ins.address))
-            #for r in cap_ins.regs_read:
-                #print("reg_read: %s " %cap_ins.reg_name(r))
-            #for r in cap_ins.regs_write:
-                #print("reg_write: %s " %cap_ins.reg_name(r))
-   # insnlist = list(ins_mnemonic)
-        #for csinsn in insnlist:
-            #print(csinsn)
-
-
-
-# for mov
-
-"""
-
-def get_successors(self):
-        oplist = self.oplist.split()
-        if(oplist[0][0] == '3' and oplist[0][1] == '0' and oplist[0][2] == '4' and oplist[0][3] == '1'): # ret
-            if self.get_execution_point().has_caller():
-                return [self.get_execution_point().caller]
-            else:
-                return []
-
-        elif(oplist[0][0] == '3' and oplist[0][1] == '0' and oplist[0][2] == '4' and oplist[0][3] == '0'): # br
-            hex_addr =  oplist[0][6] + oplist[0][7] + oplist[0][4] + oplist[0][5]
-            br_target = int(hex_addr, 16)
-            target = ExecutionPoint(self.function.name, br_target, self.function.caller)
-            return [target,]
-            
-        else:
-            return [self.get_execution_point().forward(self.length*2)]
-
-
-"""

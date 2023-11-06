@@ -6,7 +6,7 @@ int main (int a, int b) {
 
   if (a < b) {
     int i;
-    for (i=0; i < 3; i++) {
+    for (i = 0; i < 3; i++) {
       v[i] = a;
     }
  }

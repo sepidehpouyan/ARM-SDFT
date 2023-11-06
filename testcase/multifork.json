@@ -1,0 +1,12 @@
+{
+	"file": "testcase/multifork",
+	"starting_function": "main",
+	"timing_sensitive": true,
+	"parameters": [{
+			"confidential": true 
+		}
+	],
+	"result": {
+		"confidential": true
+	}
+}

@@ -1,5 +1,5 @@
 {
-	"file": "testcase/call2",
+	"file": "testcase/call",
 	"starting_function": "main",
 	"timing_sensitive": true,
 	"parameters": [{

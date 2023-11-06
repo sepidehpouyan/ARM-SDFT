@@ -151,8 +151,8 @@ Disassembly of section .text:
     8156:	429a      	cmp	r2, r3
     8158:	da02      	bge.n	8160 <main+0x1c>
     815a:	687b      	ldr	r3, [r7, #4]
-    815c:	3302      	adds	r3, #2
-    815e:	60fb      	str	r3, [r7, #12]
+    815c:	3302      	adds 	r3, #2
+    815e:	60fb      	str 	r3, [r7, #12]
     8160:	68fb      	ldr	r3, [r7, #12]
     8162:	0018      	movs	r0, r3
     8164:	46bd      	mov	sp, r7

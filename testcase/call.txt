@@ -155,11 +155,11 @@ Disassembly of section .text:
     815a:	b580      	push	{r7, lr}
     815c:	b082      	sub	sp, #8
     815e:	af00      	add	r7, sp, #0
-    8160:	6078      	str	r0, [r7, #4]
-    8162:	6039      	str	r1, [r7, #0]
-    8164:	687b      	ldr	r3, [r7, #4]
-    8166:	2b02      	cmp	r3, #2
-    8168:	d105      	bne.n	8176 <main+0x1c>
+    8160:	6078      	str	 r0, [r7, #4]
+    8162:	6039      	str r1, [r7, #0]
+    8164:	687b      	ldr r3, [r7, #4]
+    8166:	2b01      	cmp	r3, #1
+    8168:	dc05      	bgt.n	8176 <main+0x1c>
     816a:	683b      	ldr	r3, [r7, #0]
     816c:	0018      	movs	r0, r3
     816e:	f7ff ffe9 	bl	8144 <foo>

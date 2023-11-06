@@ -17,8 +17,3 @@ int main (int a, int b) {
 
   return result;
 }
-
-'''
-In this program, if a<b --> v[0] = a , v[1] = a , v[2] = a. Consequently, Angr should indicate that these three memory locations are tainted. Is it possible? How?
-
-'''

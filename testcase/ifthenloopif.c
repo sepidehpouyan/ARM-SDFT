@@ -15,7 +15,7 @@ int main (int a, int b) {
       
     int i;
 
-    for (i=0; i<3; i++) {
+    for ( i = 0; i < 3; i++) {
         
       if ((b + foo(1)) < a) {
           

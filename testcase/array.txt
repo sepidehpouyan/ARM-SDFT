@@ -139,22 +139,22 @@ Disassembly of section .text:
     8140:	000081b9 	.word	0x000081b9
 
 00008144 <main>:
-    8144r0:	b580      	push	{r7, lr}
+    8144:	b580      	push	{r7, lr}
     8146:	b084      	sub	sp, #16
     8148:	af00      	add	r7, sp, #0
     814a:	6078      	str	r0, [r7, #4]
     814c:	6039      	str	r1, [r7, #0]
     814e:	2303      	movs	r3, #3
-    8150:	60bb      	str	r3, [r7, #8]
+    8150:	60bb      	str r3, [r7, #8]
     8152:	687a      	ldr	r2, [r7, #4]
     8154:	683b      	ldr	r3, [r7, #0]
     8156:	429a      	cmp	r2, r3
     8158:	da10      	bge.n	817c <main+0x38>
     815a:	2300      	movs	r3, #0
-    815c:	60fb      	str	r3, [r7, #12]
+    815c:	60fb      	str r3, [r7, #12]
     815e:	e00a      	b.n	8176 <main+0x32>
     8160:	f648 03fc 	movw	r3, #35068	; 0x88fc
-    8164:	f2c0 0301 	movt	r3, #1
+    8164:	f2c0 0301 	movt	 r3, #1
     8168:	68fa      	ldr	r2, [r7, #12]
     816a:	0092      	lsls	r2, r2, #2
     816c:	6879      	ldr	r1, [r7, #4]
@@ -164,7 +164,7 @@ Disassembly of section .text:
     8174:	60fb      	str	r3, [r7, #12]
     8176:	68fb      	ldr	r3, [r7, #12]
     8178:	2b02      	cmp	r3, #2
-    817a:	ddf1      	ble.n	8160 <main+0x1c>
+    817a:	ddf1      	ble.n 8160 <main+0x1c>
     817c:	68bb      	ldr	r3, [r7, #8]
     817e:	0018      	movs	r0, r3
     8180:	46bd      	mov	sp, r7

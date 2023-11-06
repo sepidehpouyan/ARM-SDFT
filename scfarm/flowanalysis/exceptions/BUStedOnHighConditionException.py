@@ -1,0 +1,2 @@
+class BUStedOnHighConditionException(Exception):
+    pass
