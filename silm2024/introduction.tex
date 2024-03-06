@@ -1,0 +1,167 @@
+
+\section*{Preamble}
+
+Confidential computing, with a focus on fortifying the integrity of code
+and data actively in use, has prominently embraced the deployment of
+\acp{TEE}, exemplified by technologies like ARM TrustZone. These
+\acp{TEE} leverage hardware capabilities to establish secure enclaves for
+applications, elevating the security posture. However, despite the robust
+security framework provided by \acp{TEE}, the persistent threat of
+side-channel attacks remains a formidable challenge, operating beyond
+conventional threat model boundaries. Successful exploitation of these
+attacks can compromise the default security assurances embedded in the
+underlying hardware.
+
+In the realm of embedded systems, ARM microcontrollers have emerged as
+pivotal components. Their ubiquity in the embedded systems market can be
+attributed to their versatility, energy efficiency, scalability, industry
+support, and integration capabilities. These factors collectively make
+ARM-based solutions a preferred choice for a wide range of applications,
+contributing to their widespread adoption across various industries. Recent
+strides in enhancing the security of ARM microcontrollers have seen the
+integration of TrustZone, a technology designed to compartmentalize and
+secure sensitive computations. Nevertheless, ARM microcontrollers equipped
+with TrustZone have become enticing targets for side-channel attackers.
+This chapter explores this duality — the amalgamation of heightened
+security through TrustZone and the persistent vulnerability to side-channel
+attacks.
+
+Building upon the side-channel detection tool presented in chapter
+\ref{ch:scfmsp}, this chapter takes a significant step forward to enhance
+the precision of our previous static analysis tool. It leverages a
+groundbreaking symbolic taint-tracking approach to conduct static analysis
+on ARMv8-M binaries, proactively identifying both timing and storage
+channels. We introduces \ac{SCF}\textsuperscript{ARM}, an advanced and
+precise side-channel analysis tool designed to identify information leakage
+stemming from timing side-channels, interrupt-latency attacks (commonly
+known as Nemesis), novel DMA-based attacks (referred to as BUSted), and
+unintended information flow within TrustZone applications tailored for ARM
+microcontrollers.  The evaluation results affirm the robustness and
+scalability of \ac{SCF}\textsuperscript{ARM} in detecting vulnerabilities
+within realistic applications, thereby establishing its effectiveness as a
+proactive measure for bolstering security in ARM-based confidential
+computing environments.
+
+\section{Introduction} \label{sect:intro3}
+
+With the rapid proliferation of \ac{IoT} devices in various domains, such
+as smart homes, healthcare, transportation, and industrial systems,
+ensuring the security of these interconnected devices has become an utmost
+concern. \ac{IoT} systems, consisting of embedded devices and networked
+components, handle an abundance of sensitive data, making them prime
+targets for malicious actors seeking to exploit vulnerabilities
+\cite{IOTSecurity1, IOTSecurity2}. Among the multitude of security threats,
+timing side-channel attacks have emerged as a significant and pervasive
+challenge, leveraging timing variations to exploit vulnerabilities and
+compromise the confidentiality and integrity of sensitive data
+\cite{timingattack, Nemesis, Cache1, brumley2011remote, Travis, busted}.  
+
+ARM family processors have emerged as the dominant choice for embedded
+devices, capturing a substantial market share of over 60\%
+\cite{arm_qualcomm}. To enhance security, ARM has incorporated TrustZone
+\cite{TZM, DemystifyingAT}, a hardware-based security feature, into their
+processors. TrustZone ensures the isolation of security-critical software
+and data from the rest of the system, enabling secure execution of critical
+tasks and protection of sensitive information. It achieves this by dividing
+the processor into two separate and concurrent security realms or worlds:
+the 'Normal World' and the 'Secure World.' These worlds operate
+independently of each other, possessing distinct memory spaces and
+execution environments. 
+
+Here, developers often rely on the presumption that secrets are protected
+within the secure world due to the processor's isolation guarantees.
+However, extensive research \cite{surveyonTEE, DemystifyingAT, loadstep,
+truspy, Bypassed, Qualcomm, busted} has revealed the potential
+vulnerability of the TrustZone secure world to side channel attacks, which
+can lead to the unintended disclosure of fine-grained secrets. 
+
+%For instance, TruSpy \cite{truspy} exploits the cache contention between
+%normal world and secure world to implement a timing-based cache
+%side-channel attack and then extract a full 128-bit AES encryption key
+%stored in the trusted environment. The research demonstrated that while
+%the contents of the processor cache are safeguarded by the hardware
+%isolation, the access pattern to these cache lines remains unprotected.
+%Similarly, in \cite{Qualcomm}, researchers targeted Arm TrustZone in a
+%malicious OS scenario. They leveraged the OS's capabilities to invoke
+%interrupts and utilized the Prime+Probe \cite{primeandprobe} technique to
+%recover a 256-bit private key from Qualcomm's ECDSA algorithm. %
+
+The TrustZone technology employed in Armv8-M processors (such as
+Cortex-M23/ M33/ M35P/ M55/ M85), do not claim to protect against side
+channel attacks due to secret-dependent control flow with measurable timing
+differences or secret-dependent memory access patterns \cite{armdeveloper}.
+Additionally, it is important to note that TrustZone may not effectively
+prevent secret leakage stemming from program implementation flaws, which
+can arise from weaknesses in protocols or algorithms, as well as mistakes
+made by developers. 
+
+%As an example, let's consider an One-Time Password \gls{OTP} system
+%implemented within the TrustZone environment \cite{trustotp}. In a secure
+%and well-implemented \gls{OTP} system, once an \gls{OTP} is utilized, it
+%should immediately become invalid and should not be stored in any
+%accessible location. However, if the \gls{OTP}s are stored in an insecure
+%manner, such as being logged or stored in plaintext on unprotected memory
+%or external I/O, an unauthorized attacker who gains access to the system
+%or the logs could retrieve the previously used \gls{OTP}s. %
+
+Early detection of side channel attacks enables proactive mitigation
+measures to be implemented. Over the years, researchers and practitioners
+have proposed various approaches to analyze binary code, or source code
+employing techniques such as symbolic execution \cite{binsec, pitchfork},
+type systems \cite{scfmsp, MantelAVR, Agat, barthe2014system}, and machine
+learning \cite{MLforSC}, among others \cite{timingattack}. These approaches
+aim to identify and mitigate timing side channel vulnerabilities targeting
+different architectures. However, each approach carries its own limitations
+and strengths, necessitating a thorough exploration of the existing body of
+work in this field (refer to Section \ref{sect:related3}).
+
+In this chapter, we present an innovative automated approach utilizing symbolic execution-based analysis for the static verification of binaries targeting the ARM Cortex-M23 microcontroller. This approach capitalizes on the predictability of instruction execution times on Cortex-M23 microcontrollers. Our objective is to ensure the absence of timing side channel attacks, interrupt-latency attacks (such as Nemesis \cite{Nemesis}), DMA-based attacks (referred to as BUSted \cite{busted}), and detect any undesired explicit and implicit information flow, which is roughly equivalent to the concept of covert storage channels in later literature \cite{storagechannel}. This is particularly relevant in the context of applications that are compartmentalized into a security critical application part (such as managing and using cryptographic credentials) and a less critical part (such as sending and receiving network packets) to make use of the ARM TrustZone. 
+
+Our proposed approach has been implemented in an automated tool,
+\ac{SCF}\textsuperscript{ARM}, named after \cite{scfmsp}, to statically
+verify ARMv8-M binaries against the aforementioned vulnerabilities. The
+primary objective of \ac{SCF}\textsuperscript{ARM} is to track and monitor the flow of secret information between the TrustZone's secure world and the non-secure world, detecting and reporting any potential information leakages. To the best of our knowledge, this tool represents the first of its kind in performing static analysis on ARMv8-M binaries, addressing both timing and storage channels. 
+
+To establish the efficacy of our approach, we conducted a thorough
+evaluation of \ac{SCF}\textsuperscript{ARM}. This evaluation encompassed a
+thoughtfully chosen set of benchmarks that spanned a diverse range of
+programs, ranging from those with vulnerabilities to benign ones. These
+benchmarks were intentionally designed to unveil both typical and
+challenging structures of secret-dependent control flow, thereby offering a
+thorough assessment of \ac{SCF}\textsuperscript{ARM}'s effectiveness. In summary, our contributions include:
+
+\begin{itemize}
+%
+  \item{We have proposed a groundbreaking approach that harnesses the
+capabilities of symbolic execution techniques to conduct sound information
+flow analysis at the binary level. This approach is specifically tailored
+for applications compartmentalized within ARM TrustZone, a widely adopted
+security feature in commercial microcontrollers and mobile devices designed
+to safeguard valuable and confidential data.}
+%
+  \item{To automate the process of checking ARMv8-M binaries and
+identifying potential information leakages, we have implemented our novel
+approach in a software tool called \ac{SCF}\textsuperscript{ARM}. Written
+in Python, SCFARM efficiently carries out the analysis and provides
+detailed reports on identified vulnerabilities. We have made both
+\ac{SCF}\textsuperscript{ARM} and our benchmark datasets publicly available
+on the GitHub repository at
+\href{https://github.com/sepidehpouyan/ARM-SDFT}{https://github.com/sepidehpouyan/ARM-SDFT}}
+%
+  \item{We have successfully integrated static analysis techniques into
+\ac{SCF}\textsuperscript{ARM}, enabling the detection of timing side
+channel attacks, Nemesis attacks \cite{Nemesis}, BUSted attacks
+\cite{busted}, and undesired direct and indirect information flow to
+accessible and unprotected locations.}
+%
+  \item{To assess the effectiveness and scalability of
+\ac{SCF}\textsuperscript{ARM}, we conducted a rigorous evaluation by
+applying it to a set of vulnerable and benign programs targeting ARM
+Cortex-M23. Our evaluation encompassed testing numerous scenarios to
+analyze the accuracy of the tool in identifying information leakages and
+its ability to handle larger codebases. The results demonstrated the high
+precision and scalability of \ac{SCF}\textsuperscript{ARM}, validating its
+utility in real-world security assessments.}
+%
+\end{itemize}
+
