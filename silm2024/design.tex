@@ -4,21 +4,30 @@
 
 While TrustZone technology in Armv8-M processors offers robust security measures, it remains susceptible to side channel attacks due to secret-dependent control flow, resulting in observable timing variations or secret-dependent memory access patterns \cite{armdeveloper}. Furthermore, it's worth noting that TrustZone might not entirely mitigate implicit and explicit information leaks resulting from unintentional developer errors in secure coding practices, system architecture flaws, and non-compliance with stringent security standards and protocols.
 
-To elaborate, consider a secure One-Time Password (\gls{OTP}) system illustrated in Fig. \ref{fig:OTP}. \gls{OTP} system is integral in verifying mobile users accessing critical web services that require a heightened level of security. An \gls{OTP} is a dynamically generated numeric or alphanumeric string of characters used to authenticate a user for a single transaction or session with an authentication server. This approach augments the traditional user ID and password authentication by introducing a dynamic password that changes with each authentication attempt. The \gls{OTP} mechanism operates by generating a code using an internal clock (or counter) and a factory-encoded secret key known as the 'seed.' 
+To elaborate, consider a secure One-Time Password (\ac{OTP}) system illustrated in Fig. \ref{fig:OTP}. \ac{OTP} system is integral in verifying mobile users accessing critical web services that require a heightened level of security. An \ac{OTP} is a dynamically generated numeric or alphanumeric string of characters used to authenticate a user for a single transaction or session with an authentication server. This approach augments the traditional user ID and password authentication by introducing a dynamic password that changes with each authentication attempt. The \ac{OTP} mechanism operates by generating a code using an internal clock (or counter) and a factory-encoded secret key known as the 'seed.' 
 
-To maintain the confidentiality of both the generated \gls{OTP}s and the associated seeds, the code and data involved in \gls{OTP} operations inhabit a secure enclave within TrustZone \cite{trustotp}. This enclave establishes a isolated space, distinct from the regular operating system running in the normal world. TrustZone technology guarantees the integrity and confidentiality of \gls{OTP}s and seeds by restricting access exclusively to the secure domain.
+To maintain the confidentiality of both the generated \acp{OTP} and the
+associated seeds, the code and data involved in \ac{OTP} operations inhabit
+a secure enclave within TrustZone \cite{trustotp}. This enclave establishes
+a isolated space, distinct from the regular operating system running in the
+normal world. TrustZone technology guarantees the integrity and
+confidentiality of \acp{OTP} and seeds by restricting access exclusively to the secure domain.
 
-However, any inadvertent mishandling of the seeds or \gls{OTP}s—such as storing them in plaintext on unprotected memory, logging them, or exposed via non-secure I/O —or if an implicit flow is triggered by updating a publicly observable variable within the program control flow—an attacker could potentially access the generated \gls{OTP}s. Furthermore, the attacker might deduce secrets by analyzing time variations within a secret-dependent branch.
+However, any inadvertent mishandling of the seeds or \acp{OTP} -- such as
+storing them in plaintext on unprotected memory, logging them, or exposed
+via non-secure I/O -- or if an implicit flow is triggered by updating a
+publicly observable variable within the program control flow—an attacker
+could potentially access the generated \acp{OTP}. Furthermore, the attacker might deduce secrets by analyzing time variations within a secret-dependent branch.
 
 \begin{figure}
   \centering
   \medskip
-  \includegraphics[width=.9\textwidth]{chapters/chapter3/image/OTP.jpg}
+  \includegraphics[width=.9\textwidth]{figures/OTP.jpg}
   \caption[Short caption for Table of Figures]{TrustZone-based Implementation of Secure OTP Generation}
   \label{fig:OTP}
 \end{figure}
 
-We present an approach that merges taint tracking techniques with symbolic execution of trusted application (\gls{TA}) binaries to systematically identify the undesired information leakage. Subsequently, we notify developers and designers of these identified leakage points for further action and resolution. 
+We present an approach that merges taint tracking techniques with symbolic execution of trusted application (\ac{TA}) binaries to systematically identify the undesired information leakage. Subsequently, we notify developers and designers of these identified leakage points for further action and resolution. 
 
 \subsection{Scope and Threat Model}
 

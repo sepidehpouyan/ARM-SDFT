@@ -26,8 +26,7 @@ This chapter explores this duality — the amalgamation of heightened
 security through TrustZone and the persistent vulnerability to side-channel
 attacks.
 
-Building upon the side-channel detection tool presented in chapter
-\ref{ch:scfmsp}, this chapter takes a significant step forward to enhance
+Building upon the side-channel detection tool~\cite{scfmsp}, this chapter takes a significant step forward to enhance
 the precision of our previous static analysis tool. It leverages a
 groundbreaking symbolic taint-tracking approach to conduct static analysis
 on ARMv8-M binaries, proactively identifying both timing and storage
@@ -113,7 +112,7 @@ learning \cite{MLforSC}, among others \cite{timingattack}. These approaches
 aim to identify and mitigate timing side channel vulnerabilities targeting
 different architectures. However, each approach carries its own limitations
 and strengths, necessitating a thorough exploration of the existing body of
-work in this field (refer to Section \ref{sect:related3}).
+work in this field (refer to Section \ref{sec:related3}).
 
 In this chapter, we present an innovative automated approach utilizing symbolic execution-based analysis for the static verification of binaries targeting the ARM Cortex-M23 microcontroller. This approach capitalizes on the predictability of instruction execution times on Cortex-M23 microcontrollers. Our objective is to ensure the absence of timing side channel attacks, interrupt-latency attacks (such as Nemesis \cite{Nemesis}), DMA-based attacks (referred to as BUSted \cite{busted}), and detect any undesired explicit and implicit information flow, which is roughly equivalent to the concept of covert storage channels in later literature \cite{storagechannel}. This is particularly relevant in the context of applications that are compartmentalized into a security critical application part (such as managing and using cryptographic credentials) and a less critical part (such as sending and receiving network packets) to make use of the ARM TrustZone. 
 
