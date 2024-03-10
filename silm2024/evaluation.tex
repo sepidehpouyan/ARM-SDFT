@@ -15,9 +15,8 @@ The benchmarks consist of C programs compiled using 'arm-none-eabi-gcc,' a cross
 
  \begin{figure}
   \centering
-  \medskip
-  \includegraphics[width=.9\textwidth]{figures/string.jpg}
-  \caption[Short caption for Table of Figures]{String Comparison}
+  \includegraphics[width=\columnwidth]{figures/string.jpg}
+  \caption{String Comparison}
   \label{fig:string}
 \end{figure}
 
@@ -36,7 +35,7 @@ The benchmarks consist of C programs compiled using 'arm-none-eabi-gcc,' a cross
 \end{itemize}
 
 
-\begin{sidewaystable}
+\begin{table*}
     \centering
 		\caption{ Evaluation results for \ac{SCF}\textsuperscript{ARM} on the benchmark suite. For each compiled example program, we give an indication for C program complexity (LOC = lines of code, CFG Size = number of nodes in the program’s Control Flow Graph), execution time of \ac{SCF}\textsuperscript{ARM}, and list the vulnerabilities found by \ac{SCF}\textsuperscript{ARM}.}
   
@@ -91,7 +90,7 @@ multiply & 5 & 12 & 3.789s & $\times$ & $\times$ & $\times$ & \checkmark \\
 	   		   
 		   \hline
 		\end{tabular}
-\end{sidewaystable}
+\end{table*}
 
 In Table \ref{tab:eval3}, we present the experimental outcomes obtained by applying \ac{SCF}\textsuperscript{ARM} to the benchmark. Our results showcases that \ac{SCF}\textsuperscript{ARM} effectively analyzes intricate binaries designed for ARM Cortex-M23. The tool not only adeptly identifies a spectrum of side-channel vulnerabilities but also demonstrates its efficiency in swiftly and accurately detecting sensitive data leakage. Keep in mind that utilizing branch balancing or constant-time programming by itself cannot entirely eliminate the risk of unintended information leakage within a program. In such instances, it becomes imperative to take additional measures, such as securely storing program outputs in a designated protected memory space or returning them in an encrypted format. These precautions provide an extra layer of security, effectively mitigating the possibility of sensitive information being unintentionally exposed to attackers, even when employing the mentioned programming techniques.
 

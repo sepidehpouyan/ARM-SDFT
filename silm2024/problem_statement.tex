@@ -20,9 +20,8 @@ For \textbf{Transition} between two worlds, three new instructions have been int
 
 \begin{figure}
   \centering
-  \medskip
-  \includegraphics[width=.9\textwidth]{figures/SFC.jpg}
-  \caption[Short caption for Table of Figures]{Secure Function Call in TrustZone-M}
+  \includegraphics[width=\columnwidth]{figures/SFC.jpg}
+  \caption{Secure Function Call in TrustZone-M}
   \label{fig:Ttansition}
 \end{figure}
 
@@ -61,13 +60,12 @@ ARM adopts a load-store memory access model, restricting memory interaction sole
 
 To elaborate further, let's examine a code snippet (compiled for the Arm Cortex-M23) that includes a balanced conditional statement dependent on a secret variable, as visualized in Fig. \ref{fig:busted}. Since both execution paths have an identical execution time of 5 clock cycles, starting from t + 1 after the \textit{cmp} instruction, an attacker wouldn't observe any difference in execution time. Consequently, distinguishing between these execution paths and subsequently extracting the secret becomes unfeasible. Yet, an observer could still detect divergent memory access patterns between these two execution paths. When the branch (\textit{bne}) isn't taken, it completes within a single clock cycle, causing the \textit{str} instruction to occur at clock cycle t + 3. Conversely, if taken, the branch incurs a two-clock-cycle process, resulting in the \textit{str} instruction taking place at clock cycle t + 4. Overall, this changes the relative position of the \textit{str} instruction to the \textit{bne} instruction and unveils the secret. By monitoring either 't + 3' or 't + 5' clock cycles, an attacker can potentially deduce the secret by observing the presence or absence of contention on the data memory bus.
 
-\begin{figure}
+\begin{figure*}
   \centering
-  \medskip
-  \includegraphics[width=.9\textwidth]{figures/busted.jpg}
-  \caption[Short caption for Table of Figures]{(a) secret-dependent branch, (b) compiled code CFG for Arm Cortex-M23, (c) memory access pattern and monitoring of clock t+3 and t+5.}
+  \includegraphics[width=\textwidth]{figures/busted.jpg}
+  \caption{(a) secret-dependent branch, (b) compiled code CFG for Arm Cortex-M23, (c) memory access pattern and monitoring of clock t+3 and t+5.}
   \label{fig:busted}
-\end{figure}
+\end{figure*}
 
 Given the nature of this attack, targeting on microarchitectural design issues, comparisons have arisen likening its impact to that of renowned exploits like 'Spectre' and 'Meltdown' which affected more complex architectures in recent history. Embedded projects relying on hardware-assisted privilege separation via TrustZone-M must now factor in the potential for information leakage from secure components operating within the secure world. According to the researchers, there are software-based countermeasures available to mitigate the impact of this microarchitectural design flaw. The crucial consideration in addressing time-based attacks involves minimizing the presence of secret-dependent code in security operation implementations. Essentially, the time required for a security procedure should remain independent of the success or any secret of the operation.
 
@@ -75,10 +73,9 @@ Given the nature of this attack, targeting on microarchitectural design issues, 
 
 Sensitive information can be unintentionally leaked through covert storage channels \cite{storagechannel, sabelfeld}. These channels, whether explicit or implicit, provide pathways for the unauthorized transfer of sensitive data, which can compromise system security. Implicit covert storage channels, in particular, introduce challenges, as data can inadvertently traverse indirect or unintended pathways resulting from the program's control structure. This contrasts with explicit information flows, which occur when confidential data is directly assigned to public variables. To illustrate, let us consider a scenario with two security levels: ``high'' and ``low,'' denoting varying degrees of confidentiality. We can examine the code presented in Fig. \ref{fig:implicit}, which exhibits a data flow from the high variable \textit{h} to the low variable \textit{l}. The insecurity within this code stems from the \textit{l = 1} assignment in a control context conditioned upon the confidential variable \textit{h}.
 
- \begin{figure}
+\begin{figure}
   \centering
-  \medskip
-  \includegraphics[width=.3\textwidth]{figures/implicit.jpg}
+  \includegraphics[width=.5\columnwidth]{figures/implicit.jpg}
   \caption[Short caption for Table of Figures]{An implicit information flow}
   \label{fig:implicit}
 \end{figure}

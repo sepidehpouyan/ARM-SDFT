@@ -19,13 +19,12 @@ via non-secure I/O -- or if an implicit flow is triggered by updating a
 publicly observable variable within the program control flow—an attacker
 could potentially access the generated \acp{OTP}. Furthermore, the attacker might deduce secrets by analyzing time variations within a secret-dependent branch.
 
-\begin{figure}
+\begin{figure*}
   \centering
-  \medskip
-  \includegraphics[width=.9\textwidth]{figures/OTP.jpg}
-  \caption[Short caption for Table of Figures]{TrustZone-based Implementation of Secure OTP Generation}
+  \includegraphics[width=\textwidth]{figures/OTP.jpg}
+  \caption{TrustZone-based Implementation of Secure OTP Generation}
   \label{fig:OTP}
-\end{figure}
+\end{figure*}
 
 We present an approach that merges taint tracking techniques with symbolic execution of trusted application (\ac{TA}) binaries to systematically identify the undesired information leakage. Subsequently, we notify developers and designers of these identified leakage points for further action and resolution. 
 
@@ -56,8 +55,11 @@ Afterward, we sums up the execution time of all instructions within each region 
 \newtheorem{definition}{Definition}[section]
 \begin{definition}\label{def:timing}
     The function \textbf{branchPathTime\textsuperscript{r}} is defined recursively as: \\
-    
-   \centerline{$branchPathTime^r(br) := \Sigma (execution\_time(ins) - branchPathTime^{then}(ins))$}
+   
+   \noindent 
+   $branchPathTime^r(br) := $ \\
+     $\Sigma (execution\_time(ins) -$ \\
+     $ branchPathTime^{then}(ins))$
 
    Where:
 \begin{align*}
