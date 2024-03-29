@@ -24,7 +24,7 @@ software is explicitly restricted from directly accessing resources in the
 secure world. This paper focuses exclusively on TrustZone features for
 Cortex-M processors.
 
-TrustZone technology for Armv8-M devices is tailored for ARM
+TrustZone for Armv8-M devices is tailored for ARM
 microcontrollers, specifically the Cortex-M series, which is optimized for
 swift context switching and ultra-low power embedded applications.
 Leveraging specialized hardware integrated into Cortex-M cores along with a
@@ -33,7 +33,9 @@ of multiple software security domains. These domains enforce strict access
 controls, allowing trusted software exclusive access to secure memory and
 I/O, all while maintaining optimal system performance.
 
-\paragraph{\textbf{Armv8-M Architecture}} Armv8-M features a set of 32-bit
+\paragraph{\textbf{Armv8-M Architecture}}
+%
+Armv8-M features a set of 32-bit
 general-purpose registers (R0 to R12, Link Register (LR), Program Counter
 (PC)) and floating-point register (D0-D15) that are shared between secure
 and non-secure states. TrustZone-enabled Armv8-M microcontrollers have
@@ -47,51 +49,56 @@ latency, and improves system performance. The architecture includes a
 two-stage pipeline for instruction execution, providing efficient handling
 of instructions.
 
-\paragraph{\textbf{Memory Space}} In the Armv8-M architecture, memory  is
-partitioned into secure and non-secure memory regions. The secure memory
-space is further divided into two types: secure and non-secure callable
-(\ac{NSC}). Secure addresses are exclusively allocated for memory and
-peripherals that can only be accessed when the core is executing in secure
-state. The program address, the address of the instruction currently
-executed, determines the security state of the processor. In contrast,
-non-secure addresses are designated for memory and peripherals accessible
-by all software running on the device, including both secure and non-secure
-components. \ac{NSC} represents a unique class of secure memory locations
-that facilitates the transition of software from a non-secure to a secure
-state, allowing for controlled and secure state changes. 
+\paragraph{\textbf{The Secure World}}
+%
+% In the Armv8-M architecture, memory  is partitioned into secure and
+% non-secure memory regions.
+The secure memory space is further divided into two types: secure and
+non-secure callable (\ac{NSC}). Secure addresses are exclusively allocated
+for memory and peripherals that can only be accessed when the core is
+executing in secure state. The program address, the address of the
+instruction currently executed, determines the security state of the
+processor.
+% In contrast, non-secure addresses are designated for memory and
+% peripherals accessible by all software running on the device, including
+% both secure and non-secure components.
+\ac{NSC} represents a unique class of secure memory locations that
+facilitates the transition of software from a non-secure to a secure state,
+allowing for controlled and secure state changes. 
 
 The security state assigned to each memory address are established through
-either the programmable Secure Attribution Unit (\ac{SAU}) or by an fixed
-Implementation Defined Attribution Unit (\ac{IDAU}). The \ac{SAU} is always
-available in Armv8-M cores, while the \ac{IDAU} is external to the core and
-the presence depends on the vendors implementation. In cases where both the
-\ac{IDAU} and \ac{SAU} are available within a system, the \ac{SAU}'s
-attributions take precedence, unless the \ac{IDAU} specifies a higher
-security attribute for a particular address.The \ac{SAU} can only be
+either the programmable \ac{SAU} or by a fixed \ac{IDAU}. The \ac{SAU} is
+always available in Armv8-M cores, while the \ac{IDAU} is external to the
+core and the presence depends on the vendors implementation. In cases where
+both the \ac{IDAU} and \ac{SAU} are available within a system, the
+\ac{SAU}'s attributions take precedence, unless the \ac{IDAU} specifies a
+higher security attribute for a particular address.The \ac{SAU} can only be
 programmed in the secure state. 
 
-In ARM TrustZone-M, the Nested Vectored Interrupt Controller (NVIC) has
-been enhanced to enable secure and non-secure configuration for each
-interrupt. The processor seamlessly handles interrupts based on its current
-security state. Notably, when a non-secure interrupt occurs during secure
-code execution, the processor securely manages the transition, preserving
-secure context data and preventing information leakage.
+The Nested Vectored Interrupt Controller (NVIC) enables secure and
+non-secure configuration for each interrupt. The processor seamlessly
+handles interrupts based on its current security state. Notably, when a
+non-secure interrupt occurs during secure code execution, the processor
+securely manages the transition, preserving secure context data and
+preventing information leakage.
 
-\paragraph{\textbf{Transitioning Worlds}} Three instructions have been
-introduced to transition between the secure and normal world: secure
-gateway (\ac{SG}), branch with exchange to non-secure state (\ac{BXNS}),
-and branch with link and exchange to non-secure state (\ac{BLXNS}). The
-\ac{SG} instruction is employed for switching from the non-secure to the
-secure state. It is typically found at the start of a secure entry point's
-veneer, which consists of an \ac{SG} instruction followed by a branch to
-the secure world's function. The veneers are meant to reside in memory
-regions attributed to the \ac{NSC} by the linker. The \ac{SG} instruction
-serves several functions, such as setting the security level to secure,
-banking registers, and resetting bit[0] of the LR register to 0, indicating
-that the return will lead to a transition back from secure to non-secure.
-To return from the secure world to the non-secure world, as illustrated in
-Fig.~\ref{fig:Ttansition}, the compiler employs the \ac{BXNS} instruction.
-This instruction initiates a branch or return to the non-secure program.
+\paragraph{\textbf{Transitioning Worlds}}
+%
+Three instructions have been introduced to transition between the secure
+and normal world: secure gateway (\ac{SG}), branch with exchange to
+non-secure state (\ac{BXNS}), and branch with link and exchange to
+non-secure state (\ac{BLXNS}). The \ac{SG} instruction is employed for
+switching from the non-secure to the secure state. It is typically found at
+the start of a secure entry point's veneer, which consists of an \ac{SG}
+instruction followed by a branch to the secure world's function. The
+veneers are meant to reside in memory regions attributed to the \ac{NSC} by
+the linker. The \ac{SG} instruction serves several functions, such as
+setting the security level to secure, banking registers, and resetting
+bit[0] of the LR register to 0, indicating that the return will lead to a
+transition back from secure to non-secure.  To return from the secure world
+to the non-secure world, as illustrated in Fig.~\ref{fig:Ttansition}, the
+compiler employs the \ac{BXNS} instruction.  This instruction initiates a
+branch or return to the non-secure program.
 
 \begin{figure}
   \centering
@@ -100,18 +107,19 @@ This instruction initiates a branch or return to the non-secure program.
   \label{fig:Ttansition}
 \end{figure}
 
-Conversely, secure software can invoke functions in the non-secure world.
-This action prompts the generation of compiler code that orchestrates the
-transition. It begins by preserving all registers, including the return
-address, within the secure stack. Subsequently, the registers are cleared.
-The \ac{BLXNS} instruction is used to execute the branch to the non-secure
-world, where it sets LR to a specific value, FNC\_RETURN (0xFEFFFFFF). Upon
-completion of the execution in the non-secure world, a return to the secure
-world is initiated using 'BX' instruction. When the BX instruction detects
-the FNC\_RETURN value in LR, it triggers a transition to the secure state.
-This shift is made possible by restoring all saved registers, including the
-return address, from the secure stack. It's also important to note that
-state transitions may also occur due to exceptions and interrupts.
+% Conversely, secure software can invoke functions in the non-secure world.
+% This action prompts the generation of compiler code that orchestrates the
+% transition. It begins by preserving all registers, including the return
+% address, within the secure stack. Subsequently, the registers are
+% cleared.  The \ac{BLXNS} instruction is used to execute the branch to the
+% non-secure world, where it sets LR to a specific value, FNC\_RETURN
+% (0xFEFFFFFF). Upon completion of the execution in the non-secure world, a
+% return to the secure world is initiated using 'BX' instruction. When the
+% BX instruction detects the FNC\_RETURN value in LR, it triggers a
+% transition to the secure state.  This shift is made possible by restoring
+% all saved registers, including the return address, from the secure stack.
+% It's also important to note that state transitions may also occur due to
+% exceptions and interrupts.
 
 TrustZone is not bullet-proof and has experienced successful attacks across
 various methods and contexts~\cite{DemystifyingAT, surveyonTEE,
@@ -123,77 +131,84 @@ Bypassed}. These vulnerabilities arise due to the shared resources and
 memory management between the secure and non-secure domains.
 ARM~\cite{armdeveloper} has acknowledged that the security extensions for
 the Armv8-M architecture are not designed to protect against side-channel
-attacks resulting from control flow or memory access patterns. They argue
-that such attacks are not exclusive to the Armv8-M architecture and can
-apply to any code with secret-dependent control flow or memory access
-patterns. This type of attack can be mitigated by ensuring that the control
-flow and memory accesses patterns created by the program do not depend on
-secret state.
+attacks resulting from control flow or memory access patterns.
+Besides attacks that abuse architectural and microarchitectural state,
+sensitive information can be unintentionally leaked through covert
+channels~\cite{storagechannel, sabelfeld}.
+% that provide pathways for unauthorized transfer of sensitive
+% data, which can compromise system security.
+% They argue that such attacks are not exclusive to the Armv8-M
+% architecture and can apply to any code with secret-dependent control flow
+% or memory access patterns. This type of attack can be mitigated by
+% ensuring that the control flow and memory accesses patterns created by
+% the program do not depend on secret state.
 
 \subsection{Microarchitectural Side-Channel Attacks}
 
-The security model proposed by \acp{TEE} is not foolproof and must be
-approached with caution regarding side-channel attacks. These attacks aim
-to uncover confidential information hidden within the shared
-microarchitectural state during a victim's execution by exploiting
-observable side effects, notably timing variations. Typically, adversaries
-begin by initializing the shared microarchitectural elements in a
-predetermined state. They then proceed to measure state changes during or
-after the victim's execution, utilizing methods such as transactional
-memory aborts or performance monitoring counters. However, the most
-prevalent method for observing microarchitectural state changes is through
-timing analysis~\cite{vanbulckphdthesis}. In cases where microarchitectural
-optimizations depend on global stateful elements like Translation Lookaside
-Buffers (TLB), caches, or branch predictors, any modifications to these
-elements during the victim's execution will result in measurable timing
-differences in the attacker domain. The analysis of microarchitectural
-state updates provides valuable insights into the victim's behavior, even
-in scenarios where attackers are architecturally isolated and have limited
-interaction with the victim, strictly through defined input and output
-channels.
+% The security model proposed by \acp{TEE} is not foolproof and must be
+% approached with caution regarding side-channel attacks.
+A range of attacks aim to uncover confidential information hidden within
+the shared microarchitectural state during a victim's execution by
+exploiting observable side effects. Notably, observing timing variations
+% Typically, adversaries begin by initializing the shared
+% microarchitectural elements in a predetermined state. They then proceed
+% to measure state changes during or after the victim's execution,
+% utilizing methods such as transactional memory aborts or performance
+% monitoring counters. However, the most
+is the most prevalent method for observing microarchitectural state
+changes~\cite{vanbulckphdthesis}.
+% In cases where microarchitectural optimizations depend on global stateful
+% elements like Translation Lookaside Buffers (TLB), caches, or branch
+% predictors, any modifications to these elements during the victim's
+% execution will result in measurable timing differences in the attacker
+% domain. The analysis of microarchitectural state updates provides
+% valuable insights into the victim's behavior, even in scenarios where
+% attackers are architecturally isolated and have limited interaction with
+% the victim, strictly through defined input and output channels.
 
 Single-purpose embedded processors typically emphasize simplicity, power
 efficiency, and cost-effectiveness over advanced microarchitectural
-features like caches, pipelining, and speculative execution. This focus
+features like caches, pipelining, and speculative execution, which 
 results in predictable instruction timings, reducing the risk of
 side-channel attacks. However, research~\cite{Travis, brumley2005remote}
 has demonstrated that secrets can still be revealed through start-to-end
-timing side channels, by measuring the overall execution time of
-secret-dependent branches, even on processors with entirely deterministic
-instruction timing behavior. 
-
+timing side channels.
+% , by measuring the overall execution time of
+% secret-dependent branches, even on processors with entirely deterministic
+% instruction timing behavior. 
 In addition, Nemesis-type interrupt timing attacks~\cite{Nemesis} can
-exploit highly precise, instruction-granular timing measurements, which
+allow highly precise, instruction-granular timing measurements, which
 can even compromise secrets from branches with balanced start-to-end
 timings. These side-channel attacks abuse the CPU's interrupt mechanism to
-reveal microarchitectural instruction timings within \acp{TEE}. The attack
-leverages the fact that hardware interrupts are only processed upon
-instruction retirement, after the currently executing instruction has
-completed, resulting in variable CPU cycles for different instruction types
-and processor states. Consequently, an untrusted operating system can
-precisely measure interrupt handling time, to retrieve the execution length
-of interrupted instruction and distinguish between secret-dependent program
-branches. In essence, for a successful Nemesis attack on processors with
-constant-time interrupt latency and multi-cycle instruction sets, where
-each instruction is uninterruptible, an attacker just requires a different
-execution time for at least one instruction in the if/else branch.
-
+reveal microarchitectural instruction timings within \acp{TEE}.
+% The attack
+% leverages the fact that hardware interrupts are only processed upon
+% instruction retirement, after the currently executing instruction has
+% completed, resulting in variable CPU cycles for different instruction types
+% and processor states. Consequently, an untrusted operating system can
+% precisely measure interrupt handling time, to retrieve the execution length
+% of interrupted instruction and distinguish between secret-dependent program
+% branches. In essence, for a successful Nemesis attack on processors with
+% constant-time interrupt latency and multi-cycle instruction sets, where
+% each instruction is uninterruptible, an attacker just requires a different
+% execution time for at least one instruction in the if/else branch.
 In recent findings, researchers have identified DMA-based side-channel
 attacks specifically aimed at embedded TEEs~\cite{busted, marton}. These
 attacks exploit nuanced timing variations arising from contention between a
 DMA device and the CPU as they access the shared memory bus. This
 exploitation enables the attacker to construct a cycle-accurate memory
-access trace of a victim program. Notably, at the Black Hat Asia
-conference, Cristiano Rodrigues presented a side-channel attack that
-leverages DMA to target ARM TrustZone. This sophisticated attack
-effectively bypasses hardware-enforced isolation primitives, providing
-unauthorized access to Trusted Applications (\acp{TA}) and resulting in the
-unauthorized leakage of sensitive information.
+access trace of a victim program.
+% Notably, at the Black Hat Asia
+% conference, Cristiano Rodrigues presented a side-channel attack that
+% leverages DMA to target ARM TrustZone. This sophisticated attack
+% effectively bypasses hardware-enforced isolation primitives, providing
+% unauthorized access to Trusted Applications (\acp{TA}) and resulting in the
+% unauthorized leakage of sensitive information.
 
 \subsection{BUSted: Microarchitectural Side-Channel Attacks on TrustZone-M MCUs}
-
-BUSted~\cite{busted} is a novel class of microarchitectural side-channel
-attacks that leverage the timing differences exposed in the arbitration
+%
+BUSted~\cite{busted} is a class of microarchitectural side-channel
+attacks that leverage the timing differences in the arbitration
 logic of the MCUs bus intecconnect. It's evident that concurrent access by
 multiple bus master (e.g., CPU, DMA) to a shared bus slave (e.g., memory
 controller) leads to time delays for at least one, causing subtle timing
@@ -203,11 +218,18 @@ pattern. Consequently, without breaking security isolation boundaries, a
 malicious bus master can spy on bus activity and determine when another bus
 master accessed a specific slave.
 
-ARM adopts a load-store memory access model, restricting memory interaction solely to load/store (LDR and STR) instructions. Thus, an attacker can exploit the MCU's load-store architecture to observe timing variations. Specifically, in cases where the victim code incorporates secret-dependent control flow and loads/stores execute at different clock offsets on conditional paths, this discrepancy leads to distinct memory access patterns. An attacker could exploit this to deduce and illicitly obtain a particular secret.
+% ARM adopts a load-store memory access model, restricting memory interaction
+% solely to load/store (LDR and STR) instructions. Thus, an attacker can
+% exploit the MCU's load-store architecture to observe timing variations.
+% Specifically, in cases where the victim code incorporates secret-dependent
+% control flow and loads/stores execute at different clock offsets on
+% conditional paths, this discrepancy leads to distinct memory access
+% patterns.
+% An attacker could exploit this to deduce and illicitly obtain a
+% particular secret.
 
-To elaborate further, let's examine a code snippet (compiled for the Arm
-Cortex-M23) that includes a balanced conditional statement dependent on a
-secret variable, as visualized in Fig.~\ref{fig:busted}. Since both
+The code example in Fig.~\ref{fig:busted} shows a balanced conditional statement dependent on a
+secret variable, compiled for the ARM Cortex-M23. Since both
 execution paths have an identical execution time of 5 clock cycles,
 starting from t + 1 after the \textit{cmp} instruction, an attacker
 wouldn't observe any difference in execution time. Consequently,
@@ -233,41 +255,41 @@ contention on the data memory bus.
 
 Given the nature of this attack, targeting on microarchitectural design
 issues, comparisons have arisen likening its impact to that of renowned
-exploits like 'Spectre' and 'Meltdown' which affected more complex
-architectures in recent history. Embedded projects relying on
+exploits like Spectre. Embedded projects relying on
 hardware-assisted privilege separation via TrustZone-M must now factor in
-the potential for information leakage from secure components operating
-within the secure world. According to the researchers, there are
-software-based countermeasures available to mitigate the impact of this
-microarchitectural design flaw. The crucial consideration in addressing
-time-based attacks involves minimizing the presence of secret-dependent
-code in security operation implementations. Essentially, the time required
-for a security procedure should remain independent of the success or any
-secret of the operation.
+the potential for information leakage from components operating
+within the secure world.
+%According to the researchers, there are
+%software-based countermeasures available to mitigate the impact of this
+%microarchitectural design flaw. The crucial consideration in addressing
+%time-based attacks involves minimizing the presence of secret-dependent
+%code in security operation implementations. Essentially, the time required
+%for a security procedure should remain independent of the success or any
+%secret of the operation.
 
-\subsection{Covert Storage Channels}
-
-Sensitive information can be unintentionally leaked through covert storage
-channels~\cite{storagechannel, sabelfeld}. These channels, whether explicit
-or implicit, provide pathways for the unauthorized transfer of sensitive
-data, which can compromise system security. Implicit covert storage
-channels, in particular, introduce challenges, as data can inadvertently
-traverse indirect or unintended pathways resulting from the program's
-control structure. This contrasts with explicit information flows, which
-occur when confidential data is directly assigned to public variables. To
-illustrate, let us consider a scenario with two security levels: ``high''
-and ``low,'' denoting varying degrees of confidentiality. We can examine
-the code presented in Fig.~\ref{fig:implicit}, which exhibits a data flow
-from the high variable \textit{h} to the low variable \textit{l}. The
-insecurity within this code stems from the \textit{l = 1} assignment in a
-control context conditioned upon the confidential variable \textit{h}.
-
-\begin{figure}
-  \centering
-  \includegraphics[width=.3\columnwidth]{figures/implicit.jpg}
-  \caption{An implicit information flow}
-  \label{fig:implicit}
-\end{figure}
+% \subsection{Covert Storage Channels}
+% 
+% Sensitive information can be unintentionally leaked through covert storage
+% channels~\cite{storagechannel, sabelfeld}. These channels, whether explicit
+% or implicit, provide pathways for the unauthorized transfer of sensitive
+% data, which can compromise system security. Implicit covert storage
+% channels, in particular, introduce challenges, as data can inadvertently
+% traverse indirect or unintended pathways resulting from the program's
+% control structure. This contrasts with explicit information flows, which
+% occur when confidential data is directly assigned to public variables. To
+% illustrate, let us consider a scenario with two security levels: ``high''
+% and ``low,'' denoting varying degrees of confidentiality. We can examine
+% the code presented in Fig.~\ref{fig:implicit}, which exhibits a data flow
+% from the high variable \textit{h} to the low variable \textit{l}. The
+% insecurity within this code stems from the \textit{l = 1} assignment in a
+% control context conditioned upon the confidential variable \textit{h}.
+% 
+% \begin{figure}
+%   \centering
+%   \includegraphics[width=.3\columnwidth]{figures/implicit.jpg}
+%   \caption{An implicit information flow}
+%   \label{fig:implicit}
+% \end{figure}
 
 \subsection{Static Code Analysis}
 
