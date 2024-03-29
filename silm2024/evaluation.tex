@@ -1,4 +1,4 @@
-\section{EVALUATION AND DISCUSSION}
+\section{Evaluation}
 
 In this section, we present our assessment of
 \tool{}, emphasizing the accuracy of our static
@@ -27,31 +27,36 @@ overview of selected benchmark programs.
 
 \begin{itemize}
 %
-    \item \textbf{busted:} This program features a vulnerability to the 'busted' attack, primarily due to a secret-dependent branching instruction. The vulnerability arises from the execution of the 'str' instruction at different time offsets within the 'then' and 'else' regions of the branch. However, it is free of start-to-end timing leaks due to having a balanced branch.
+    \item \textbf{busted:} This program features a vulnerability to the 'busted' attack. The vulnerability arises from the execution of the 'str' instruction at different time offsets within the 'then' and 'else' regions. However, it is free of start-to-end timing leaks due to having a balanced branch.
 %
-    \item \textbf{busted-free:} This program introduces dummy instructions, such as 'nop,' strategically placed in the code to delay the execution of the 'str' instruction in the 'else' branch by one clock cycle. This intentional delay ensures that memory access occurs at the same time offset. However, this approach results in an unbalanced branch.
+    \item \textbf{busted-free:} This program uses 'nop' to
+delay the execution of the 'str' in the 'else' branch by one
+clock cycle. This intentional delay ensures that memory access occurs at
+the same time offset but results in unbalanced branches.
 %
-    \item \textbf{strcmp:} This code performs a character-by-character comparison of two strings using a loop with an explicit branch. (refer to Fig. \ref{fig:string} (a)). However, because it relies on secret-dependent branches for the comparison process, it introduces potential timing side-channel vulnerabilities.
+    \item \textbf{strcmp:} This code performs a character-by-character
+comparison of two strings (cf. Fig. \ref{fig:string} (a)) and includes secret-dependent branches.
 %
-    \item \textbf{ constant\_time\_strcmp:} Utilizing a constant-time methodology, we enhance the string comparison code to resist timing side-channel attacks. This involves eliminating branches and employing mathematical formulas within the program (see Fig. \ref{fig:string} (b)). The comparison of characters is achieved through bitwise XOR (\textasciicircum) and bitwise OR ($|$) operations, eliminating the need for explicit branches and effectively mitigating timing side-channel vulnerabilities.
+    \item \textbf{constant\_time\_strcmp:} Utilizing a constant-time
+implementation we fix the timing side channel in our string comparison code (cf. Fig. \ref{fig:string} (b)).
 %
     \item \textbf{diamond:} This program features two branching instructions dependent on secret values and one independent branch.
 %
     \item \textbf{loop:} The program contains a loop that relies on a condition with public data and includes a secret-dependent branch within the loop body. 
 %    
-    \item \textbf{secure\_loop:} In contrast, this code employs bitwise operations to eliminate the need for a conditional branch.
+    \item \textbf{secure\_loop:} This code employs bitwise operations to
+eliminate the need for the branch.
 %    
     \item \textbf{multifork:} In this program, a switch statement evaluates the value of a secret variable and compares it against multiple cases. 
     
     \item \textbf{ifthenloop \& ifthenloop\_nop\_padded:} These programs
-involve a branch dependent on secret data and a loop with a public variable
-in its condition, executed if the branch is taken. In the
-'ifthenloop\_nop\_padded' version, additional dummy instructions are
-introduced to ensure a balanced execution across both branches.  
+involve a branch dependent on secret data and a loop with a public
+condition variable, executed if the branch is taken. In the
+'padded' version, 'nop's ensure balanced branches.  
 %    
-    \item \textbf{ifthenlooplooptail:} This program introduces nested
-secret-dependent branches and loops, creating a more intricate control flow
-to thoroughly test \tool{}.
+    \item \textbf{ifthenlooplooptail:} This program introduces intricate
+control flow with nested
+secret-dependent branches and loops.
 %
 \end{itemize}
 
@@ -121,74 +126,59 @@ multiply & 5 & 12 & 3.789s & $\times$ & $\times$ & $\times$ & \checkmark \\
 In Table \ref{tab:eval3}, we present the experimental outcomes obtained by
 applying \tool{} to the benchmark. Our results showcases that \tool{}
 effectively analyzes intricate binaries designed for ARM Cortex-M23. The
-tool not only adeptly identifies a spectrum of side-channel vulnerabilities
-but also demonstrates its efficiency in swiftly and accurately detecting
-sensitive data leakage. Keep in mind that utilizing branch balancing or
+tool identifies a spectrum of side-channel vulnerabilities
+and also demonstrates its efficiency in swiftly and accurately detecting
+sensitive data leakage. Branch balancing or
 constant-time programming by itself cannot entirely eliminate the risk of
 unintended information leakage within a program. In such instances, it
-becomes imperative to take additional measures, such as securely storing
-program outputs in a designated protected memory space or returning them in
-an encrypted format.  These precautions provide an extra layer of security,
-effectively mitigating the possibility of sensitive information being
-unintentionally exposed to attackers, even when employing the mentioned
-programming techniques.
+becomes imperative to take additional measures, e.g., storing
+program outputs in protected memory.
+% These precautions provide an extra layer of security,
+% effectively mitigating the possibility of sensitive information being
+% unintentionally exposed to attackers, even when employing the mentioned
+% programming techniques.
 
 \subsection{Discussion}
 
-\paragraph{\textbf{Soundness}}
+\paragraph{\textbf{Soundness \& Path Explosion}}
 %
-In this study, we emphasize the paramount importance of soundness in our
-symbolic taint-tracking approach, aiming to establish credible security
-assurances for Cortex-M23 programs. Central to our methodology is the
-meticulous consideration of the execution time required for instructions on
-a Cortex-M23 microcontroller. It is noteworthy that in the absence of
+In the absence of
 sophisticated architectural features such as paging, caches, or
-out-of-order instruction pipelining, the time taken for instruction
-execution is wholly deterministic.
+out-of-order execution, the time taken for instruction
+execution on th Cortex-M23 is wholly deterministic. Our approach is sound
+in the sense that it follows the instruction semantics and execution times
+of the processor documentation. However, our approach is incompete due to
+state and path explosion for complex programs, which would lead to early
+termination of the analysis.
 
-The foundation of our proposed approach rests on the predictability of an
-instruction's execution time, a characteristic intrinsic to Cortex-M23
-microcontrollers. This inherent determinism serves as a cornerstone for the
-soundness of our approach, enabling precise prediction of an instruction's
-execution time. Consequently, programs certified by our \tool{} are
-inherently fortified against timing-side-channel vulnerabilities.
-
-\paragraph{\textbf{Nemesis Detection}}
+\paragraph{\textbf{Nemesis \& Busted Detection}}
 %
 As of our current knowledge, there have been no reported instances of a
 Nemesis attack being executed on an ARM Cortex-M microcontroller.
-Nevertheless, it is important to note that the ARM Cortex-M23 possesses all
-the necessary prerequisites for a successful Nemesis attack. In general,
-the Cortex-M23 processor tends to complete the current instruction before
-handling an interrupt. This behavior, known as a "late-arriving interrupt"
-model, means that if an interrupt is pending and becomes active during the
-execution of an instruction, the processor finishes that instruction before
-switching to the \ac{ISR}. However, the precise handling may vary depending
-on the specific microcontroller implementation and the configuration of the
-Nested Vectored Interrupt Controller (NVIC) that manages interrupts in the
-Cortex-M series.
-
-This interrupt handling mechanism introduces timing variations between
+Nevertheless, the ARM Cortex-M23 meets the 
+the necessary prerequisites for a Nemesis attack,
+completing the current instruction before
+handling an interrupt~\cite{Nemesis}. This  introduces timing variations between
 interrupted instructions, which could be leveraged by an attacker to
 distinguish between secret-dependent branches. Furthermore, in our attacker
 model, the adversary has the capability to control a timer device and
 closely monitor \acp{ISR}, roughly resembling a configuration conducive to
-launching a Busted attack \cite{busted}.
+launching a Busted attack~\cite{busted}.
 
-\paragraph{\textbf{Path explosion}}
-%
-Similar to other symbolic-execution tools, \tool{} encounters the widely
-recognized challenge of state explosion, particularly evident when dealing
-with larger binaries.  The exponential increase in path complexities
-renders exhaustive exploration practically infeasible, potentially leaving
-vulnerabilities undetected within unexplored paths.  Additionally, it is
-noteworthy that Angr, the foundational symbolic execution framework for
-\tool{}, introduces an inherent unsoundness by potentially concretizing
-values during symbolic execution. These challenges are orthogonal to the
-core contribution of this paper. Addressing the issue of path explosion and
-enhancing the soundness of symbolic execution tools are recognized as
-critical engineering tasks.  While beyond the scope of the current study,
-we acknowledge them as essential aspects deserving of attention in future
-work.
-
+% \paragraph{\textbf{Path explosion}}
+% %
+% Similar to other symbolic-execution tools, \tool{} encounters the widely
+% recognized challenge of state explosion, particularly evident when dealing
+% with larger binaries.  The exponential increase in path complexities
+% renders exhaustive exploration practically infeasible, potentially leaving
+% vulnerabilities undetected within unexplored paths.  Additionally, it is
+% noteworthy that Angr, the foundational symbolic execution framework for
+% \tool{}, introduces an inherent unsoundness by potentially concretizing
+% values during symbolic execution. These challenges are orthogonal to the
+% core contribution of this paper. Addressing the issue of path explosion and
+% enhancing the soundness of symbolic execution tools are recognized as
+% critical engineering tasks.  While beyond the scope of the current study,
+% we acknowledge them as essential aspects deserving of attention in future
+% work.
+% 
 

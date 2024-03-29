@@ -121,8 +121,8 @@ branch or return to the non-secure program.
 % It's also important to note that state transitions may also occur due to
 % exceptions and interrupts.
 
-TrustZone is not bullet-proof and has experienced successful attacks across
-various methods and contexts~\cite{DemystifyingAT, surveyonTEE,
+TrustZone is not bullet-proof and successful attacks have been
+published~\cite{DemystifyingAT, surveyonTEE,
 returntononsecure}. The architecture, while designed to provide robust
 hardware-based security by isolating secure and non-secure worlds, is not
 immune to microarchitectural side-channel
@@ -148,7 +148,7 @@ channels~\cite{storagechannel, sabelfeld}.
 % The security model proposed by \acp{TEE} is not foolproof and must be
 % approached with caution regarding side-channel attacks.
 A range of attacks aim to uncover confidential information hidden within
-the shared microarchitectural state during a victim's execution by
+the shared microarchitectural state by
 exploiting observable side effects. Notably, observing timing variations
 % Typically, adversaries begin by initializing the shared
 % microarchitectural elements in a predetermined state. They then proceed
@@ -196,7 +196,7 @@ In recent findings, researchers have identified DMA-based side-channel
 attacks specifically aimed at embedded TEEs~\cite{busted, marton}. These
 attacks exploit nuanced timing variations arising from contention between a
 DMA device and the CPU as they access the shared memory bus. This
-exploitation enables the attacker to construct a cycle-accurate memory
+enables the attacker to construct a cycle-accurate memory
 access trace of a victim program.
 % Notably, at the Black Hat Asia
 % conference, Cristiano Rodrigues presented a side-channel attack that
@@ -291,13 +291,14 @@ within the secure world.
 %   \label{fig:implicit}
 % \end{figure}
 
-\subsection{Static Code Analysis}
+\subsection{Program Analysis}
 
-\paragraph{\textbf{Taint Analysis}} As a crucial program analysis
-method, taint analysis traces the flow of data of interest throughout
-program execution. Taint analysis utilizes 'taint tags' as markers attached
-to registers and memory, serving to indicate their taint status. It
-operates via three integral components:
+\paragraph{\textbf{Taint Analysis}}
+%
+Taint analysis traces the flow of data of interest throughout
+program execution, utilizing ``taint tags'' as markers attached
+to registers and memory. It
+operates via three components:
 
 \begin{enumerate}
 %

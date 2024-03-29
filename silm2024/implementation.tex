@@ -74,13 +74,23 @@ identify potential side channel leaks within ARMv8-M assembly programs. Our
 falling into four distinct classes:
 
 \begin{itemize}
-
-\item Timing Channel: Detected when a program exhibits different execution times depending on the secret input. \ac{SCF}\textsuperscript{ARM} detects these leaks by measuring the overall running times of if/else regions within the secret-dependent branches.
-
-\item BUSted Vulnerability: Recognized when a program includes store/load instructions with different time offsets inside the if/else regions of a secret-dependent branch.
-
-\item Nemesis Vulnerability: Identified when a program displays varying execution times for at least one instruction within the if/else regions of a secret-dependent branch.
-
-\item Storage Channel: Flagged if there is an undesired information flow from secret inputs to observable output, such as return registers or non-secure memory.
-
+%
+\item Timing Channel: Detected when a program exhibits different execution
+times depending on the secret input. \tool{} detects
+these leaks by measuring the overall running times of if/else regions
+in secret-dependent branches.
+%
+\item BUSted Vulnerability: Recognized when a program includes store/load
+instructions with different time offsets inside the if/else regions of a
+secret-dependent branch.
+%
+\item Nemesis Vulnerability: Identified when a program displays varying
+execution times for at least one instruction within the if/else regions of
+a secret-dependent branch.
+%
+\item Storage Channel: Flagged if there is an undesired information flow
+from secret inputs to observable output, such as return registers or
+non-secure memory.
+%
 \end{itemize}
+
