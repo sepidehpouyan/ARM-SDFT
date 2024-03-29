@@ -2,7 +2,14 @@
 
 In response to the pervasive threat of side-channel attacks within the realm of confidential computing, we have developed and implemented \ac{SCF}\textsuperscript{ARM}. This tool excels in the automated detection of microarchitectural side channels, specifically targeting timing side channels, Nemesis, BUSted attacks, and other potential avenues for information leakage within TrustZone-M applications. Harnessing the inherent predictability of execution times on Cortex-M23 processors, \ac{SCF}\textsuperscript{ARM} employs a novel symbolic taint-tracking approach to conduct information flow analysis with a high degree of precision. We applied \ac{SCF}\textsuperscript{ARM} to a diverse array of self-implemented vulnerable and benign ARMv8-M binaries. The outcomes of these experiments underscore the tool's capability to identify a spectrum of side channels embedded within widely utilized and intricate program structures. Additionally, \ac{SCF}\textsuperscript{ARM} also validates the security of fortified programs by confirming the absence of original vulnerabilities.
 
-Several avenues for future research emerge from this work. Firstly, we aim to enhance the comprehensiveness of our framework by extending its coverage to encompass the entire ARMv8-M instruction set, aiming to enhance the applicability and effectiveness of \ac{SCF}\textsuperscript{ARM}. We intend to conduct a comprehensive evaluation of \ac{SCF}\textsuperscript{ARM} by applying it to off-the-shelf TrustZone-M programs and scrutinizing its performance in real-world implementations of cryptographic libraries, such as wolfSSL\footnote{https://www.wolfssl.com/}. This broader evaluation will offer insights into the tool's applicability and effectiveness across a diverse range of scenarios.
+Several avenues for future research emerge from this work. Firstly, we aim
+to enhance the comprehensiveness of our framework by extending its coverage
+to encompass the entire ARMv8-M instruction set, aiming to enhance the
+applicability and effectiveness of \ac{SCF}\textsuperscript{ARM}. We intend
+to conduct a comprehensive evaluation of \ac{SCF}\textsuperscript{ARM} by
+applying it to off-the-shelf TrustZone-M programs and scrutinizing its
+performance in real-world implementations of cryptographic libraries, such
+as wolfSSL~\cite{wolfssl}. This broader evaluation will offer insights into the tool's applicability and effectiveness across a diverse range of scenarios.
 
 Beyond the current scope, an intriguing prospect lies in the exploration of different vulnerabilities, including but not limited to, potential buffer overflows. This avenue of investigation promises to enrich the versatility and robustness of \ac{SCF}\textsuperscript{ARM} in identifying diverse security threats.
 

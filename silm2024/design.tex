@@ -38,7 +38,9 @@ We present an approach that merges taint tracking techniques with symbolic execu
 
 Our method involves an information flow analysis that links each value with a security tag indicating its sensitivity level. We primarily categorize these levels into two labels: '\textit{H}' for high sensitivity and '\textit{L}' for low sensitivity, where '\textit{H}' signifies higher sensitivity than '\textit{L}'. Each input (initial state of registers, etc.) and output (final state of registers, etc.) of a program is assigned one of these labels. To effectively track and identify both explicit and implicit data flows of high sensitivity during program execution, our approach incorporates an effective symbolic taint-tracking mechanism.
 
-Specifically, initial register contents and associated memory are transparently substituted with unconstrained symbolic values. We, furthermore, utilize Angr\footnote{https://angr.io/}’s annotation system to flag highly sensitive symbolic values as tainted. This taint, conservatively propagated throughout symbolic execution, allows for convenient querying during subsequent analysis to identify potential information leakage. 
+Specifically, initial register contents and associated memory are
+transparently substituted with unconstrained symbolic values. We,
+furthermore, utilize Angr’s annotation systemi~\cite{angr} to flag highly sensitive symbolic values as tainted. This taint, conservatively propagated throughout symbolic execution, allows for convenient querying during subsequent analysis to identify potential information leakage. 
 
 \subsection{Timing-Sensitive Information Flow Policy}
 
