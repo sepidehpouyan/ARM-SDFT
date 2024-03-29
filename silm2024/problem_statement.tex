@@ -18,12 +18,12 @@ In ARM TrustZone-M, the Nested Vectored Interrupt Controller (NVIC) has been enh
 
 For \textbf{Transition} between two worlds, three new instructions have been introduced including secure gateway (\ac{SG}), branch with exchange to non-secure state (\ac{BXNS}), and branch with link and exchange to non-secure state (\ac{BLXNS}). The \ac{SG} instruction is employed for switching from the non-secure to the secure state. It is typically found at the start of a secure entry point's veneer, which consists of an \ac{SG} instruction followed by a branch to the secure world's function. The veneers are meant to reside in memory regions attributed to the \ac{NSC} by the linker. The \ac{SG} instruction serves several functions, such as setting the security level to secure, banking registers, and resetting bit[0] of the LR register to 0, indicating that the return will lead to a transition back from secure to non-secure. To return from the secure world to the non-secure world, as illustrated in Fig. \ref{fig:Ttansition}, the compiler employs the \ac{BXNS} instruction. This instruction initiates a branch or return to the non-secure program.
 
-\begin{figure}
+\begin{figure*}
   \centering
-  \includegraphics[width=\columnwidth]{figures/SFC.jpg}
+  \includegraphics[width=.7\linewidth]{figures/SFC.jpg}
   \caption{Secure Function Call in TrustZone-M}
   \label{fig:Ttansition}
-\end{figure}
+\end{figure*}
 
 Conversely, secure software can invoke functions in the non-secure world. This action prompts the generation of compiler code that orchestrates the transition. It begins by preserving all registers, including the return address, within the secure stack. Subsequently, the registers are cleared. The \ac{BLXNS} instruction is used to execute the branch to the non-secure world, where it sets LR to a specific value, FNC\_RETURN (0xFEFFFFFF). Upon completion of the execution in the non-secure world, a return to the secure world is initiated using 'BX' instruction. When the BX instruction detects the FNC\_RETURN value in LR, it triggers a transition to the secure state. This shift is made possible by restoring all saved registers, including the return address, from the secure stack. It's also important to note that state transitions may also occur due to exceptions and interrupts.
 
