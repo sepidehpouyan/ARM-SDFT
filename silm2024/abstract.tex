@@ -1,0 +1,15 @@
+ARM TrustZone is a dominant security technology in embedded processors,
+mobile devices and in the Internet of Things. While TrustZone enables
+software isolation where critical code execues in a ``secure world'' that
+is protected from direct access from less critical code, side-channel
+vulnerabilities are outside of the isolation model: secret-dependent
+behaviour in vulnerable programs may be observed from the normal world,
+compromising the confidentiality of secure-world programs. In this paper we
+present a tool that uses symbolic execution and static analysis to detect
+timing side channels in compiled programs for ARM's light-weight Cortex-M
+processors. We evaluate our approach on previously published benchmarks and
+attacks, showing that our tool \tool{} exhibits high accuracy in detecting
+a range of side-channel vulnerabilities, specifically in the TrustZone
+secure world. To the best of our knowledge, \tool{} is the first
+side-channel detection tool tailored for ARM TrustZone, which we make
+available under an open-source license.
