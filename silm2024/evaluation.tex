@@ -29,7 +29,7 @@ overview of selected benchmark programs.
 %
     \item \textbf{busted:} This program features a vulnerability to the 'busted' attack. The vulnerability arises from the execution of the 'str' instruction at different time offsets within the 'then' and 'else' regions. However, it is free of start-to-end timing leaks due to having a balanced branch.
 %
-    \item \textbf{busted-free:} This program uses 'nop' to
+    \item \textbf{busted-free:} This program uses \texttt{nop} to
 delay the execution of the 'str' in the 'else' branch by one
 clock cycle. This intentional delay ensures that memory access occurs at
 the same time offset but results in unbalanced branches.
@@ -52,7 +52,7 @@ eliminate the need for the branch.
     \item \textbf{ifthenloop \& ifthenloop\_nop\_padded:} These programs
 involve a branch dependent on secret data and a loop with a public
 condition variable, executed if the branch is taken. In the
-'padded' version, 'nop's ensure balanced branches.  
+'padded' version, \texttt{nop}s ensure balanced branches.  
 %    
     \item \textbf{ifthenlooplooptail:} This program introduces intricate
 control flow with nested
