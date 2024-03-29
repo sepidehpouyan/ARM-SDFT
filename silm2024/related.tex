@@ -1,15 +1,108 @@
 \section{Related Work}\label{sec:related3}
 
-\paragraph{Side-channel Attacks on TrustZone-M.}
+\paragraph{\textbf{Side-channel Attacks on TrustZone-M}}
+%
+Extensive research has been conducted on microarchitectural timing channels
+\cite{timingattack}, notably introduced by Kocher \cite{Kocher96}, gaining
+widespread attention following the disclosure of Spectre \cite{spectre} and
+Meltdown \cite{meltdown}. However, exploration into side-channel attacks
+within TEE context is a relatively recent endeavor.  Several authors
+\cite{loadstep, truspy, Bypassed, Qualcomm, vanbulckphdthesis,
+gross2019breaking, surveyonTEE} have raised concerns regarding software
+side-channel vulnerabilities in higher-end TEEs like Arm TrustZone.
+Additionally, research efforts on Microcontroller Units (MCUs)
+\cite{Nemesis, marton, busted, returntononsecure, oflynn2019ondevice,
+barenghi2021cortexm, gnad2019leakynoise} have investigated the potential
+for information leakage through software-based side-channels. For instance,
+Gnad et al. in \cite{gnad2019leakynoise} capitalized on the correlation
+between ADC noise and MCU power consumption in Cortex-M4, utilizing
+software power consumption traces to extract secret keys from an AES
+implementation. Similarly, O'Flynn and Alex Dewar in
+\cite{oflynn2019ondevice} exploited the ADC in a SAM L11 (Cortex-M23) MCU,
+executing a remote power side-channel attack to bypass TrustZone-M
+protection and retrieve a secret key. In contrast to power side-channel
+attacks, Nemesis attack by Van Bulck et al. \cite{Nemesis} exploits the
+CPU's interrupt mechanism to extract instruction timings from MSP430 MCUs.
+In \cite{marton}, the authors leverage minor timing variations in
+unprivileged DMA requests, arising from contention on the shared memory bus
+within openMSP430 MCUs, to acquire a memory access trace of a victim
+program. Likewise, BUSted \cite{busted} represents a type of side-channel
+attack utilizing timing discrepancies on the MCU bus interconnect to bypass
+the security assurances provided by memory protection primitives in Armv8-M
+MCUs with TrustZone-M.
  
- Extensive research has been conducted on microarchitectural timing channels \cite{timingattack}, notably introduced by Kocher \cite{Kocher96}, gaining widespread attention following the disclosure of Spectre \cite{spectre} and Meltdown \cite{meltdown}. However, exploration into side-channel attacks within TEE context is a relatively recent endeavor. Several authors \cite{loadstep, truspy, Bypassed, Qualcomm, vanbulckphdthesis, gross2019breaking, surveyonTEE} have raised concerns regarding software side-channel vulnerabilities in higher-end TEEs like Arm TrustZone. Additionally, research efforts on Microcontroller Units (MCUs) \cite{Nemesis, marton, busted, returntononsecure, oflynn2019ondevice, barenghi2021cortexm, gnad2019leakynoise} have investigated the potential for information leakage through software-based side-channels. For instance, Gnad et al. in \cite{gnad2019leakynoise} capitalized on the correlation between ADC noise and MCU power consumption in Cortex-M4, utilizing software power consumption traces to extract secret keys from an AES implementation. Similarly, O'Flynn and Alex Dewar in \cite{oflynn2019ondevice} exploited the ADC in a SAM L11 (Cortex-M23) MCU, executing a remote power side-channel attack to bypass TrustZone-M protection and retrieve a secret key. In contrast to power side-channel attacks, Nemesis attack by Van Bulck et al. \cite{Nemesis} exploits the CPU's interrupt mechanism to extract instruction timings from MSP430 MCUs. In \cite{marton}, the authors leverage minor timing variations in unprivileged DMA requests, arising from contention on the shared memory bus within openMSP430 MCUs, to acquire a memory access trace of a victim program. Likewise, BUSted \cite{busted} represents a type of side-channel attack utilizing timing discrepancies on the MCU bus interconnect to bypass the security assurances provided by memory protection primitives in Armv8-M MCUs with TrustZone-M.
- 
-\paragraph{Microarchitectural Timing Side Channels Static Analysis.} There exists substantial literature on timing side channel detection employing ML models \cite{MLforSC, chiappetta2016realtime, allaf2017comparison}, dynamic taint analysis \cite{graa2017detection}, fuzzing \cite{nilizadeh2018diffuzz}, Abstract interpretation \cite{kopf2012automatic, doychev2015cacheaudit}, Logical reduction \cite{chen2017precise}, type-based solutions \cite{MantelAVR, scfmsp, barthe2014system, rodrigues2016sparse, zhang2012languagebased, lux2011tool}, and several other methodologies \cite{timingattack, akram2020sherlock, szefer2019survey}. Our focus will be on approaches that bear direct relevance to our research. Köpf et al. \cite{kopf2012automatic} proposed an approach to automatically derive upper bounds on cache leakage within cryptographic executables. Subsequently, CacheAudit \cite{doychev2015cacheaudit} expanded upon their research by enhancing abstractions and precision. It uses static analysis for cache side channels to derive formal, quantitative security guarantees for a comprehensive set of side-channel adversaries, based on observing cache states, traces of hits and misses, and execution times. Chen et al. \cite{chen2017precise} introduced Themis, an innovative end-to-end static analysis tool tailored for Java applications. Themis utilizes Quantitative Cartesian Hoare Logic (QCHL) to verify $\epsilon$-bounded noninterference, enabling the detection of intricate resource-usage side-channel vulnerabilities within real-world Java programs. 
+\paragraph{\textbf{Identifying Microarchitectural Timing Side Channels
+through Static Analysis}}
+%
+There exists substantial literature on timing side channel detection
+employing ML models \cite{MLforSC, chiappetta2016realtime,
+allaf2017comparison}, dynamic taint analysis \cite{graa2017detection},
+fuzzing \cite{nilizadeh2018diffuzz}, Abstract interpretation
+\cite{kopf2012automatic, doychev2015cacheaudit}, Logical reduction
+\cite{chen2017precise}, type-based solutions \cite{MantelAVR, scfmsp,
+barthe2014system, rodrigues2016sparse, zhang2012languagebased,
+lux2011tool}, and several other methodologies \cite{timingattack,
+akram2020sherlock, szefer2019survey}. Closely related to our work are the
+Side Channel Finder tools~\cite{lux2011tool, MantelAVR, scfmsp}, which
+involve type systems for the static detection in Java programs and AVR and
+MSP430 programs. To enhance the accuracy of our analysis from previous
+research and expand our capability to trace information flow across
+TrustZone-provided protection domains, the approach in this paper employs a
+symbolic execution-based analysis.  This allows for meticulous control over
+memory operations, refining the precision of our analysis.
 
-FlowTracker \cite{rodrigues2016sparse} offers the capability to statically trace data dependencies, identifying possible timing leaks in LLVM programs. By leveraging the presumption of LLVM code being in Static Single Assignment (SSA) format, the tool computes control dependencies through a sparse analysis method, negating the need to construct the entire Program Dependency Graph. Barthe et al. \cite{barthe2014system} proposed an assembly-level type system to verify the constant-time policy. Zhang et al. \cite{zhang2012languagebased} introduced a language-based approach for a basic While-language, aiming to track side-channel leaks. The authors suggested a cooperative model between hardware and software to mitigate covert timing channel. Side Channel Finder (\ac{SCF}) \cite{lux2011tool} checks secret-dependent loops and branching using a type system for static detection of timing channels in Java. In our prior work \cite{scfmsp}, we proposed a security type system designed for statically analyzing MSP430 binaries. This system ensures the absence of timing leaks, Nemesis-style vulnerabilities, and unintended information flow through covert storage channel. To enhance the accuracy of our analysis from previous research and expand our capability to trace information flow across TrustZone-provided protection domains, this study employs a symbolic execution-based analysis. This allows for meticulous control over memory operations, refining the precision of our analysis.
+\paragraph{\textbf{Symbolic Execution}}
+%
+Some works \cite{binsec, pitchfork, sung2018canal,
+chattopadhyay2018symbolic, brotzman2019casym, brennan2018symbolic,
+yavuz2022encider, pasareanu2016multi, bang2016string} have, furthermore,
+focused on detecting microarchitectural side-channel vulnerabilities using
+symbolic execution. For instance, Bang et al. \cite{bang2016string} use
+symbolic execution, string analysis, and model counting to quantify leakage
+for a particular type of side channel. Pasareanu et al.
+\cite{pasareanu2016multi} proposed a symbolic execution approach for
+side-channels detection and quantification. They measure side-channel
+leakage by creating specific public inputs that trigger maximum leakage.
+This is accomplished through Max-SMT solving applied to the constraints
+derived from symbolic execution. ENCIDER \cite{yavuz2022encider} employs
+dynamic symbolic execution and taint analysis to uncover timing and cache
+side-channel vulnerabilities within Intel SGX applications. It decomposes
+side-channel requirements based on the bounded non-interference property
+and implements byte-level information flow tracking through API modeling.
+CoCo-Channel \cite{brennan2018symbolic} employs taint analysis to detect
+secret-dependent conditional statements within Java programs. It assigns
+symbolic cost expressions to various program paths and utilizes symbolic
+execution to identify and report paths demonstrating secret-dependent
+timing behavior.
 
-\paragraph{Symbolic Execution.} Some works \cite{binsec, pitchfork, sung2018canal, chattopadhyay2018symbolic, brotzman2019casym, brennan2018symbolic, yavuz2022encider, pasareanu2016multi, bang2016string} have, furthermore, focused on detecting microarchitectural side-channel vulnerabilities using symbolic execution. For instance, Bang et al. \cite{bang2016string} use symbolic execution, string analysis, and model counting to quantify leakage for a particular type of side channel. Pasareanu et al. \cite{pasareanu2016multi} proposed a symbolic execution approach for side-channels detection and quantification. They measure side-channel leakage by creating specific public inputs that trigger maximum leakage. This is accomplished through Max-SMT solving applied to the constraints derived from symbolic execution. ENCIDER \cite{yavuz2022encider} employs dynamic symbolic execution and taint analysis to uncover timing and cache side-channel vulnerabilities within Intel SGX applications. It decomposes side-channel requirements based on the bounded non-interference property and implements byte-level information flow tracking through API modeling. CoCo-Channel \cite{brennan2018symbolic} employs taint analysis to detect secret-dependent conditional statements within Java programs. It assigns symbolic cost expressions to various program paths and utilizes symbolic execution to identify and report paths demonstrating secret-dependent timing behavior.
+Additionally, various other studies \cite{sung2018canal,
+chattopadhyay2018symbolic, brotzman2019casym} leverage symbolic execution
+to derive a symbolic cache model and verify that the cache behavior remains
+independent of sensitive data. Scalability concerns often hinder symbolic
+execution. Daniel et al. \cite{binsec} introduced an automatic, efficient
+binary-level verification method tailored for constant-time analysis. This
+method conducts both bug identification and bounded verification on
+practical cryptographic implementations. Employing relational symbolic
+execution with specialized optimizations in information flow and
+binary-level analysis, their approach maximizes shared information between
+executions following the same path. Pitchfork \cite{pitchfork} unites
+symbolic execution and dynamic taint tracking to accurately propagate
+secret taints across all execution paths.
+% , highlighting tainted branch
+%conditions or memory addresses. Notably, Pitchfork can analyze
+%protocol-level code by abstracting the implementation details of primitives
+%through function hooks, allowing separate analysis of these components. 
 
-Additionally, various other studies \cite{sung2018canal, chattopadhyay2018symbolic, brotzman2019casym} leverage symbolic execution to derive a symbolic cache model and verify that the cache behavior remains independent of sensitive data. Scalability concerns often hinder symbolic execution. Daniel et al. \cite{binsec} introduced an automatic, efficient binary-level verification method tailored for constant-time analysis. This method conducts both bug identification and bounded verification on practical cryptographic implementations. Employing relational symbolic execution with specialized optimizations in information flow and binary-level analysis, their approach maximizes shared information between executions following the same path. Pitchfork \cite{pitchfork} unites symbolic execution and dynamic taint tracking to accurately propagate secret taints across all execution paths, highlighting tainted branch conditions or memory addresses. Notably, Pitchfork can analyze protocol-level code by abstracting the implementation details of primitives through function hooks, allowing separate analysis of these components. 
+%Developing constant-time code presents complexity due to the need for
+%intricate low-level operations that diverge from conventional programming
+%practices. Maintaining this approach proves challenging as compiler
+%optimizations often fail to preserve such implementations. Moreover , the
+%vulnerability revealed in the attack on the constant-time implementation
+%applied to the Curve25519 elliptic curve \cite{kaufmann2016constanttime}
+%highlights the error-prone nature of writing such code.
 
-Developing constant-time code presents complexity due to the need for intricate low-level operations that diverge from conventional programming practices. Maintaining this approach proves challenging as compiler optimizations often fail to preserve such implementations. Moreover , the vulnerability revealed in the attack on the constant-time implementation applied to the Curve25519 elliptic curve \cite{kaufmann2016constanttime} highlights the error-prone nature of writing such code. This work explores a purely static method for identifying timing side channels by integrating symbolic execution and taint analysis. Our prototype, \ac{SCF}\textsuperscript{ARM}, was developed to verify ARMv8-M binaries for potential side channel vulnerabilities. To the best of our knowledge, this represents the first static analysis tool capable of automatically detecting timing side channels, Nemesis, BUSted, and covert storage leakage, within ARM-M binaries.
+This research explores a static method for identifying timing side channels
+by integrating symbolic execution and taint analysis. To the best of our
+knowledge, \tool{} is the first static analysis tool capable of
+automatically detecting timing side channels, Nemesis, BUSted, and covert
+storage leakage, within ARM-M binaries.
