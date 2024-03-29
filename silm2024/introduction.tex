@@ -84,9 +84,9 @@ attacks that can lead to the unintended disclosure of secrets.
 %interrupts and utilized the Prime+Probe \cite{primeandprobe} technique to
 %recover a 256-bit private key from Qualcomm's ECDSA algorithm. %
 
-The TrustZone technology employed in Armv8-M processors (such as
+The TrustZone technology employed in ARMv8-M processors (such as
 Cortex-M23/ M33/ M35P/ M55/ M85), do not claim to protect against
-side-channel attacks~\cite{armdeveloper}. Primary attack vecturse here are
+side-channel attacks~\cite{armdeveloper}. Primary attack vectors here are
 secret-dependent control flow with measurable timing differences or
 secret-dependent memory access patterns.  Furthermore, TrustZone cannot not
 effectively prevent secret leakage that stems from program implementation
@@ -119,7 +119,7 @@ In this paper, we present a new and automated approach to detecting timing
 side-channel leakage in ARM TrustZone-M programs, utilizing symbolic
 execution-based analysis for the static verification. Our approach and tool
 targets the ARM Cortex-M23 microcontroller, capitalizing on the
-predictability of instruction execution times on hese microcontrollers.
+predictability of instruction execution times on these microcontrollers.
 Our objective is to ensure the absence of timing side-channel
 vulnerabilities, interrupt-latency vulnerabilities (such as
 Nemesis~\cite{Nemesis}), DMA-based attacks (referred to as
@@ -159,7 +159,7 @@ ARM-V8 programs. our approach is tailored to detect side-channel
 vulnerabilities in applications compartmentalization with ARM TrustZone.}
 %
   \item{We have implemented our approach in a tool \tool{}, which we
-evaluae and show that our approach successfully detects  timing side
+evaluate and show that our approach successfully detects  timing side
 channel attacks, Nemesis attacks~\cite{Nemesis}, BUSted
 attacks~\cite{busted}, and undesired direct and indirect information flow
 to unprotected locations. Our results demonstrate a high precision and
@@ -167,7 +167,7 @@ scalability of \tool{}, making it useful for real-world security
 assessments.}
 %
   \item{We make \tool{} and our benchmark datasets publicly available under
-an open-souce license at \url{\toolurl}
+an open-source license at \url{\toolurl}
 %
 %\todo{license? pipe this through \url{https://anonymous.4open.science/} for
 %the submission}

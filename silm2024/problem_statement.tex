@@ -24,7 +24,7 @@ software is explicitly restricted from directly accessing resources in the
 secure world. This paper focuses exclusively on TrustZone features for
 Cortex-M processors.
 
-TrustZone for Armv8-M devices is tailored for ARM
+TrustZone for ARMv8-M devices is tailored for ARM
 microcontrollers, specifically the Cortex-M series, which is optimized for
 swift context switching and ultra-low power embedded applications.
 Leveraging specialized hardware integrated into Cortex-M cores along with a
@@ -33,12 +33,12 @@ of multiple software security domains. These domains enforce strict access
 controls, allowing trusted software exclusive access to secure memory and
 I/O, all while maintaining optimal system performance.
 
-\paragraph{\textbf{Armv8-M Architecture}}
+\paragraph{\textbf{ARMv8-M Architecture}}
 %
-Armv8-M features a set of 32-bit
+ARMv8-M features a set of 32-bit
 general-purpose registers (R0 to R12, Link Register (LR), Program Counter
 (PC)) and floating-point register (D0-D15) that are shared between secure
-and non-secure states. TrustZone-enabled Armv8-M microcontrollers have
+and non-secure states. TrustZone-enabled ARMv8-M microcontrollers have
 separate stacks for each security state, with the Stack Pointer (SP) being
 security-banked, meaning one instance exists in each state. The CONTROL
 register and some other special-purpose registers are also banked, and the
@@ -51,7 +51,7 @@ of instructions.
 
 \paragraph{\textbf{The Secure World}}
 %
-% In the Armv8-M architecture, memory  is partitioned into secure and
+% In the ARMv8-M architecture, memory  is partitioned into secure and
 % non-secure memory regions.
 The secure memory space is further divided into two types: secure and
 non-secure callable (\ac{NSC}). Secure addresses are exclusively allocated
@@ -68,7 +68,7 @@ allowing for controlled and secure state changes.
 
 The security state assigned to each memory address are established through
 either the programmable \ac{SAU} or by a fixed \ac{IDAU}. The \ac{SAU} is
-always available in Armv8-M cores, while the \ac{IDAU} is external to the
+always available in ARMv8-M cores, while the \ac{IDAU} is external to the
 core and the presence depends on the vendors implementation. In cases where
 both the \ac{IDAU} and \ac{SAU} are available within a system, the
 \ac{SAU}'s attributions take precedence, unless the \ac{IDAU} specifies a
@@ -130,14 +130,14 @@ vulnerabilities~\cite{DemystifyingAT, busted, surveyonTEE, truspy,
 Bypassed}. These vulnerabilities arise due to the shared resources and
 memory management between the secure and non-secure domains.
 ARM~\cite{armdeveloper} has acknowledged that the security extensions for
-the Armv8-M architecture are not designed to protect against side-channel
+the ARMv8-M architecture are not designed to protect against side-channel
 attacks resulting from control flow or memory access patterns.
 Besides attacks that abuse architectural and microarchitectural state,
 sensitive information can be unintentionally leaked through covert
 channels~\cite{storagechannel, sabelfeld}.
 % that provide pathways for unauthorized transfer of sensitive
 % data, which can compromise system security.
-% They argue that such attacks are not exclusive to the Armv8-M
+% They argue that such attacks are not exclusive to the ARMv8-M
 % architecture and can apply to any code with secret-dependent control flow
 % or memory access patterns. This type of attack can be mitigated by
 % ensuring that the control flow and memory accesses patterns created by
@@ -209,7 +209,7 @@ access trace of a victim program.
 %
 BUSted~\cite{busted} is a class of microarchitectural side-channel
 attacks that leverage the timing differences in the arbitration
-logic of the MCUs bus intecconnect. It's evident that concurrent access by
+logic of the MCUs bus interconnect. It's evident that concurrent access by
 multiple bus master (e.g., CPU, DMA) to a shared bus slave (e.g., memory
 controller) leads to time delays for at least one, causing subtle timing
 variations. By observing the timing drifts on memory transactions, an

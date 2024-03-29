@@ -25,7 +25,7 @@ microarchitectures, lacking components like caches and typically operating
 with 2-3 pipeline stages. Additionally, they do not support virtual memory.
 Generally, MCUs consist of a single CPU while offering a diverse array of
 peripherals, including UART, SPI, timers, DMAs, and I2C, among others. Some
-devices may incorporate MPUs, and the latest iterations of Armv8-M MCUs
+devices may incorporate MPUs, and the latest iterations of ARMv8-M MCUs
 introduce support for dual security states, namely secure and non-secure
 worlds (known as TrustZone-M). These MCUs are engineered to ensure highly
 predictable outcomes, consistently delivering identical outputs for
@@ -88,7 +88,7 @@ approach incorporates a symbolic taint-tracking mechanism.
 
 Specifically, initial register contents and associated memory are
 transparently substituted with unconstrained symbolic values. We,
-furthermore, utilize Angr’s annotation systemi~\cite{angr} to flag 
+furthermore, utilize Angr’s annotation system~\cite{angr} to flag 
 sensitive symbolic values as tainted. This taint, conservatively propagated
 throughout symbolic execution, allows for querying during
 subsequent analysis to identify potential information leakage. 
